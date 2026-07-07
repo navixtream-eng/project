@@ -1,3 +1,16 @@
+# Máquinas Sincrónicas — Suite Didáctica
+
+Este repositorio contiene dos aplicaciones React independientes:
+
+| App | Carpeta | Qué es |
+|---|---|---|
+| **SyncLab** | `/` (raíz) | Simulador de transitorios (cortocircuito, rechazo de carga, escalón de torque) |
+| **Estudio Cap. 5** | `/study-ch5` | Documento de estudio interactivo del Capítulo 5 de Fitzgerald–Kingsley–Umans (método Feynman: predicción → laboratorio → problema resuelto), con progreso persistente |
+
+Cada una se ejecuta por separado con `npm install && npm run dev` dentro de su carpeta.
+
+---
+
 # SyncLab — Simulador de Transitorios de la Máquina Sincrónica
 
 Simulador didáctico e interactivo del **comportamiento en estado transitorio de un
