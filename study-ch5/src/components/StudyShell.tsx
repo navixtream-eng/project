@@ -3,6 +3,7 @@ import { useProgress } from './ProgressContext'
 import Section1 from '../sections/Section1'
 import Section2 from '../sections/Section2'
 import Section3 from '../sections/Section3'
+import Section4 from '../sections/Section4'
 
 const TOC = [
   {
@@ -22,6 +23,12 @@ const TOC = [
     num: '3',
     title: 'Potencia-ángulo y barra infinita',
     items: ['P = Eaf·Vt·sen δ / Xs', 'Los dos mandos y el par sincronizante', 'Problemas 4 y 5: margen y pérdida de paso'],
+  },
+  {
+    href: '#seccion-4',
+    num: '4',
+    title: 'Curvas de capacidad y motor sincrónico',
+    items: ['La carta de operación P-Q', 'Motor: δ < 0, el campo arrastra', 'Problemas 6 y 7: carta y compensador'],
   },
 ]
 
@@ -132,14 +139,16 @@ export default function StudyShell() {
           <Section2 />
           <div className="my-12 border-t border-zinc-800" />
           <Section3 />
+          <div className="my-12 border-t border-zinc-800" />
+          <Section4 />
 
           <footer className="mt-16 border-t border-zinc-800 pt-6 pb-10 text-center text-[11px] leading-relaxed text-zinc-600">
             Documento de estudio interactivo · Capítulo 5, <em>Máquinas Eléctricas</em> (Fitzgerald,
             Kingsley &amp; Umans) · Los valores numéricos de los problemas se calculan en vivo con el
             mismo motor de los laboratorios.
             <br />
-            Próximas entregas: curvas de capacidad, operación como motor sincrónico y efectos de
-            saturación.
+            Próximas entregas: ensayos de circuito abierto y cortocircuito (OCC/SCC), efectos de
+            saturación y pérdidas/rendimiento.
           </footer>
         </main>
       </div>

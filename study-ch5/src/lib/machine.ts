@@ -194,3 +194,66 @@ export function synchronizingCoeff(
 /** Q entregada operando en δ con excitación Eaf (máquina cilíndrica). */
 export const qAtDelta = (Eaf: number, Vt: number, Xs: number, delta: number): number =>
   (Eaf * Vt * Math.cos(delta) - Vt * Vt) / Xs
+
+// ---------------------------------------------------------------------------
+// Sección 4 — Carta de operación (curvas de capacidad) y motor sincrónico
+// ---------------------------------------------------------------------------
+
+/** Q máxima a potencia P sin exceder el calentamiento del ESTATOR (|S| ≤ Smax). */
+export const qMaxArmature = (P: number, Smax: number): number | null =>
+  P > Smax ? null : Math.sqrt(Smax * Smax - P * P)
+
+/**
+ * Q máxima a potencia P sin exceder el calentamiento del ROTOR (|Eaf| ≤ Eaf,max).
+ * El límite de campo es un círculo en el plano P-Q centrado en
+ * (Q = −Vt²/Xs, P = 0) con radio Eaf,max·Vt/Xs.
+ */
+export const qMaxField = (
+  P: number,
+  Vt: number,
+  Xs: number,
+  EafMax: number,
+): number | null => {
+  const r = (EafMax * Vt) / Xs
+  if (P > r) return null
+  return -((Vt * Vt) / Xs) + Math.sqrt(r * r - P * P)
+}
+
+export interface CapabilityCheck {
+  feasible: boolean
+  /** Límites violados en el punto (P, Q) */
+  violations: ('armadura' | 'campo' | 'estabilidad' | 'turbina')[]
+}
+
+/** Evalúa un punto (P, Q) contra los cuatro cercos de la carta de operación. */
+export function checkCapability(
+  P: number,
+  Q: number,
+  Vt: number,
+  Xs: number,
+  Smax: number,
+  EafMax: number,
+  PmMax: number,
+): CapabilityCheck {
+  const violations: CapabilityCheck['violations'] = []
+  if (Math.hypot(P, Q) > Smax) violations.push('armadura')
+  const rField = (EafMax * Vt) / Xs
+  if (Math.hypot(P, Q + (Vt * Vt) / Xs) > rField) violations.push('campo')
+  if (Q < -((Vt * Vt) / Xs)) violations.push('estabilidad')
+  if (P > PmMax) violations.push('turbina')
+  return { feasible: violations.length === 0, violations }
+}
+
+/**
+ * Motor sincrónico en convención de motor: absorbe P de la red y (si está
+ * sobreexcitado) le entrega Q. Internamente reutiliza la convención de
+ * generador con Ia invertida, de modo que Eaf = Vt − jXs·Ia,motor y δ < 0.
+ */
+export function solveMotor(
+  Vt: number,
+  Pabs: number,
+  Qout: number,
+  Xs: number,
+): OperatingSolution {
+  return solveFromIa(Vt, cx(-Pabs / Vt, -Qout / Vt), Xs)
+}
