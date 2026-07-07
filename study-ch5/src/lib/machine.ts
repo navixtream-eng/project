@@ -130,3 +130,67 @@ export const fmt = (x: number, digits = 3): string =>
   x.toLocaleString('es', { minimumFractionDigits: digits, maximumFractionDigits: digits })
 
 export const fmtDeg = (rad: number, digits = 1): string => `${fmt(toDeg(rad), digits)}^\\circ`
+
+// ---------------------------------------------------------------------------
+// Sección 3 — Característica potencia-ángulo y barra infinita
+// ---------------------------------------------------------------------------
+
+/** Potencia máxima transmisible (máquina cilíndrica): límite de estabilidad estática. */
+export const pMax = (Eaf: number, Vt: number, Xs: number): number => (Eaf * Vt) / Xs
+
+export interface SalientPowerComponents {
+  /** Término de excitación: Eaf·Vt·sen δ / Xd */
+  main: number
+  /** Par de reluctancia: (Vt²/2)·(1/Xq − 1/Xd)·sen 2δ */
+  reluctance: number
+  total: number
+}
+
+/** Potencia de una máquina de polos salientes, separada en sus dos componentes. */
+export function pSalient(
+  Eaf: number,
+  Vt: number,
+  Xd: number,
+  Xq: number,
+  delta: number,
+): SalientPowerComponents {
+  const main = (Eaf * Vt * Math.sin(delta)) / Xd
+  const reluctance = ((Vt * Vt) / 2) * (1 / Xq - 1 / Xd) * Math.sin(2 * delta)
+  return { main, reluctance, total: main + reluctance }
+}
+
+/**
+ * Equilibrios de P(δ) = Pm en (0, π): el primer cruce ascendente es el punto
+ * de operación estable; el último cruce descendente, el equilibrio inestable.
+ * Devuelve null si Pm supera la cresta de la curva (sin equilibrio posible).
+ */
+export function findPowerEquilibria(
+  Pm: number,
+  powerFn: (delta: number) => number,
+): { stable: number | null; unstable: number | null } {
+  const N = 3600
+  let stable: number | null = null
+  let unstable: number | null = null
+  let prev = powerFn(0) - Pm
+  for (let i = 1; i <= N; i++) {
+    const d = (i / N) * Math.PI
+    const cur = powerFn(d) - Pm
+    if (prev < 0 && cur >= 0 && stable === null) stable = d
+    if (prev >= 0 && cur < 0) unstable = d
+    prev = cur
+  }
+  return { stable, unstable }
+}
+
+/** Coeficiente de par sincronizante dP/dδ [pu/rad] por derivada numérica. */
+export function synchronizingCoeff(
+  powerFn: (delta: number) => number,
+  delta: number,
+): number {
+  const h = 1e-4
+  return (powerFn(delta + h) - powerFn(delta - h)) / (2 * h)
+}
+
+/** Q entregada operando en δ con excitación Eaf (máquina cilíndrica). */
+export const qAtDelta = (Eaf: number, Vt: number, Xs: number, delta: number): number =>
+  (Eaf * Vt * Math.cos(delta) - Vt * Vt) / Xs

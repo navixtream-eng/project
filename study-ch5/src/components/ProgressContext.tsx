@@ -24,6 +24,11 @@ export const ALL_CHECK_IDS = [
   's2-check-vcurva',
   's2-problema-generador',
   's2-problema-adelanto',
+  's3-check-resorte',
+  's3-check-mandos',
+  's3-check-pmax',
+  's3-problema-pdelta',
+  's3-problema-excitacion',
 ] as const
 
 export type CheckId = (typeof ALL_CHECK_IDS)[number]

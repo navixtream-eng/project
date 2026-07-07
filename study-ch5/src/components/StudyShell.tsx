@@ -2,6 +2,7 @@ import { BookOpenText, GraduationCap, RotateCcw, Zap } from 'lucide-react'
 import { useProgress } from './ProgressContext'
 import Section1 from '../sections/Section1'
 import Section2 from '../sections/Section2'
+import Section3 from '../sections/Section3'
 
 const TOC = [
   {
@@ -15,6 +16,12 @@ const TOC = [
     num: '2',
     title: 'FEM interna y diagrama fasorial',
     items: ['Eaf = Vt + jXs·Ia', 'La curva V de excitación', 'Problemas 2 y 3: sobre/subexcitado'],
+  },
+  {
+    href: '#seccion-3',
+    num: '3',
+    title: 'Potencia-ángulo y barra infinita',
+    items: ['P = Eaf·Vt·sen δ / Xs', 'Los dos mandos y el par sincronizante', 'Problemas 4 y 5: margen y pérdida de paso'],
   },
 ]
 
@@ -123,14 +130,16 @@ export default function StudyShell() {
           <Section1 />
           <div className="my-12 border-t border-zinc-800" />
           <Section2 />
+          <div className="my-12 border-t border-zinc-800" />
+          <Section3 />
 
           <footer className="mt-16 border-t border-zinc-800 pt-6 pb-10 text-center text-[11px] leading-relaxed text-zinc-600">
             Documento de estudio interactivo · Capítulo 5, <em>Máquinas Eléctricas</em> (Fitzgerald,
             Kingsley &amp; Umans) · Los valores numéricos de los problemas se calculan en vivo con el
             mismo motor de los laboratorios.
             <br />
-            Próximas entregas: característica potencia-ángulo, operación en barra infinita, curvas de
-            capacidad y motor sincrónico.
+            Próximas entregas: curvas de capacidad, operación como motor sincrónico y efectos de
+            saturación.
           </footer>
         </main>
       </div>
