@@ -577,3 +577,39 @@ export function criticalClearingTime(
   }
   return (lo + hi) / 2
 }
+
+// --- Criterio de áreas iguales (falla trifásica en bornes: Pe = 0) --------
+
+/** Ángulo de equilibrio inestable post-falla: δu = π − δ0. */
+export const eaDeltaU = (delta0: number): number => Math.PI - delta0
+
+/** Área de aceleración A1 = Pm·(δcl − δ0), con Pe = 0 durante la falla. */
+export const eaA1 = (Pm: number, delta0: number, deltaCl: number): number =>
+  Pm * (deltaCl - delta0)
+
+/** Área de desaceleración disponible A2 = ∫[δcl→δu](Pmax·sen δ − Pm)dδ. */
+export const eaA2 = (Pm: number, Pmax: number, deltaCl: number, deltaU: number): number =>
+  Pmax * (Math.cos(deltaCl) - Math.cos(deltaU)) - Pm * (deltaU - deltaCl)
+
+/**
+ * Ángulo crítico de despeje (forma cerrada, Pe = 0 en falla):
+ * de A1 = A2 sale  cos δcr = cos δu + (Pm/Pmax)(δu − δ0).
+ */
+export function eaDeltaCritical(Pm: number, Pmax: number): number {
+  const d0 = Math.asin(Math.min(1, Pm / Pmax))
+  const du = eaDeltaU(d0)
+  const c = Math.cos(du) + (Pm / Pmax) * (du - d0)
+  return Math.acos(Math.max(-1, Math.min(1, c)))
+}
+
+/**
+ * Tiempo para que δ alcance δcl durante la falla (Pe = 0 ⇒ aceleración
+ * constante): δ(t) = δ0 + (ωs·Pm/4H)·t²  ⇒  t = √(4H(δcl−δ0)/(ωs·Pm)).
+ */
+export const eaTimeToAngle = (
+  deltaCl: number,
+  delta0: number,
+  Pm: number,
+  H: number,
+  f: number,
+): number => Math.sqrt((4 * H * Math.max(0, deltaCl - delta0)) / (2 * Math.PI * f * Pm))

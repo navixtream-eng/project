@@ -3,6 +3,7 @@ import FeynmanCheck from '../components/FeynmanCheck'
 import Formula, { InlineMath } from '../components/Formula'
 import SolvedProblem from '../components/SolvedProblem'
 import SwingLab from '../widgets/SwingLab'
+import EqualAreaLab from '../widgets/EqualAreaLab'
 import { criticalClearingTime, fmt, pMax, solveFromPQ, toDeg } from '../lib/machine'
 
 /**
@@ -110,6 +111,56 @@ export default function C6Section3() {
             label: 'No cambia: t_cr depende solo del ángulo crítico, no de la inercia.',
             feedback:
               'El ÁNGULO crítico no depende de H (es geometría de áreas en la curva P-δ) — pero el TIEMPO para llegar a él sí: un rotor pesado tarda más en recorrer el mismo arco. δ_cr fijo + aceleración ∝ 1/H ⇒ t_cr ∝ √H.',
+          },
+        ]}
+      />
+
+      <ConceptBlock
+        title="3.2 · El criterio de áreas iguales: la contabilidad energética"
+        idea="No hace falta integrar la ecuación de oscilación para saber el destino del rotor: basta un balance de energía sobre la curva P-δ. Durante la falla (Pe = 0), todo el exceso Pm se deposita como energía cinética — el área A1 bajo la recta Pm. Tras el despeje, el rotor dispone del área A2 (entre la curva y Pm, hasta δu) para devolver ese depósito frenando. Si A1 ≤ A2, sobrevive; si el depósito no cabe, cruza δu y desliza polos."
+        analogy="Un ciclista que baja una pendiente sin frenos (la falla) y debe detenerse en la contrapendiente que sigue (el frenado post-despeje). La energía que ganó bajando tiene que caber en la subida disponible: si la bajada fue demasiado larga (despeje tardío), ninguna contrapendiente lo salva — pasa la cresta δu y ya no hay regreso."
+      >
+        <p className="mb-2">
+          Con Pe = 0 durante la falla, las dos cuentas — y el ángulo crítico donde empatan — tienen
+          forma cerrada:
+        </p>
+        <Formula
+          latex="\underbrace{P_m(\delta_{cl}-\delta_0)}_{A_1} \;=\; \underbrace{P_{max}(\cos\delta_{cl}-\cos\delta_u) - P_m(\delta_u-\delta_{cl})}_{A_2} \;\;\Rightarrow\;\; \cos\delta_{cr} = \cos\delta_u + \frac{P_m}{P_{max}}(\delta_u-\delta_0)"
+          symbols={[
+            { sym: 'A_1', meaning: 'Energía cinética depositada en el rotor durante la falla [pu·rad]: el rectángulo bajo Pm entre δ0 y el despeje. Crece con la duración de la falla — es la cuenta del enemigo.' },
+            { sym: 'A_2', meaning: 'Capacidad de frenado post-falla: el área entre la curva Pe(δ) y Pm hasta el equilibrio inestable δu = π − δ0. Es todo el presupuesto disponible — más allá de δu, la curva cae por debajo de Pm y el «freno» se convierte en acelerador.' },
+            { sym: '\\delta_{cr}', meaning: 'El ángulo de despeje donde A1 = A2 exactamente: la frontera geométrica de la estabilidad. Despejar antes = sobrevivir; después = deslizar polos.' },
+          ]}
+        />
+        <p>
+          Y la joya del caso Pe = 0: como la aceleración es constante durante la falla, δcr se
+          traduce a tiempo con una fórmula exacta —{' '}
+          <InlineMath latex="t_{cr} = \sqrt{4H(\delta_{cr}-\delta_0)/(\omega_s P_m)}" /> — el mismo
+          número que el laboratorio de oscilación encontró por fuerza bruta con RK4. Dos caminos
+          (energía y integración), una sola respuesta: así se sabe que ambos están bien.
+        </p>
+        <EqualAreaLab />
+      </ConceptBlock>
+
+      <FeynmanCheck
+        id="c6s3-check-areas"
+        question="En el criterio de áreas iguales, ¿por qué el «presupuesto de frenado» A2 termina exactamente en δu = 180° − δ0 y ni un grado más allá?"
+        options={[
+          {
+            label: 'Porque a 180° la máquina se desconecta automáticamente.',
+            feedback:
+              'No hay ningún interruptor en δu — es una frontera de la FÍSICA, no de la protección. Mira la curva: ¿qué pasa con Pe respecto a Pm justo después de δu?',
+          },
+          {
+            label: 'Porque pasado δu la curva Pe cae por debajo de Pm otra vez: el freno (Pe > Pm) se convierte en acelerador (Pm > Pe) y ya nada puede detener al rotor.',
+            correct: true,
+            feedback:
+              'Exacto: δu es el segundo cruce de Pm con la curva — el equilibrio INESTABLE. Entre δcl y δu, Pe > Pm frena; más allá, el desbalance cambia de signo y empuja hacia adelante para siempre. Por eso A2 se integra solo hasta δu: es literalmente todo el frenado que el universo ofrece. Si la energía A1 no cabe ahí, el destino está sellado aunque el rotor aún no haya llegado a δu.',
+          },
+          {
+            label: 'Porque el seno es máximo en 90° y después ya no hay potencia.',
+            feedback:
+              'Después de 90° la potencia BAJA pero sigue existiendo — y sigue frenando mientras Pe > Pm. El frenado no termina en la cresta: termina donde la curva vuelve a cruzar a Pm, en δu = 180° − δ0.',
           },
         ]}
       />

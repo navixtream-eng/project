@@ -54,6 +54,7 @@ export const ALL_CHECK_IDS = [
   'c6s2-problema-niveles',
   'c6s3-check-transitoria',
   'c6s3-check-tcr',
+  'c6s3-check-areas',
   'c6s3-problema-estabilidad',
 ] as const
 

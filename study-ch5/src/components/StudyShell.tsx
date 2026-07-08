@@ -110,7 +110,7 @@ const SECTIONS: SectionDef[] = [
     prefix: 'c6s3-',
     short: 'Estabilidad',
     title: 'Dinámica y estabilidad: E′ y la ecuación de oscilación',
-    items: ['El modelo E′ tras X′d', 'La ecuación de oscilación y t_cr', 'Problema 14: presupuesto de las protecciones'],
+    items: ['El modelo E′ tras X′d', 'La ecuación de oscilación y t_cr', 'El criterio de áreas iguales (A1 = A2)', 'Problema 14: presupuesto de las protecciones'],
     component: C6Section3,
   },
 ]
