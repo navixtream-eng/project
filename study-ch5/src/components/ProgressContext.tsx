@@ -14,6 +14,13 @@ import {
  * se calcula contra esta lista, no contra lo que haya en pantalla.
  */
 export const ALL_CHECK_IDS = [
+  'c1s1-check-ohm',
+  'c1s1-check-fringing',
+  'c1s1-problema-nucleo',
+  'c1s2-check-histeresis',
+  'c1s2-check-laminas',
+  'c1s2-check-excitacion',
+  'c1s2-problema-perdidas',
   'c4s1-check-entrehierro',
   'c4s1-check-devanados',
   'c4s1-problema-frecuencia',
