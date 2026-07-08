@@ -4,6 +4,7 @@ import Formula, { InlineMath } from '../components/Formula'
 import SolvedProblem from '../components/SolvedProblem'
 import PhasorLab from '../widgets/PhasorLab'
 import ExcitationLab from '../widgets/ExcitationLab'
+import InductanceLab from '../widgets/InductanceLab'
 import { fmt, fmtDeg, solveFromPf, toDeg } from '../lib/machine'
 
 /** Colores de fasor (paleta categórica validada, ver PhasorLab). */
@@ -120,6 +121,68 @@ export default function Section2() {
         <EquivalentCircuit />
       </ConceptBlock>
 
+      <ConceptBlock
+        title="2.2 · De las inductancias al circuito equivalente: el origen de Xs (FKU §5.2)"
+        idea="Xs no es un componente que exista dentro de la máquina: es contabilidad. Suma en un solo número tres efectos de inductancia — la dispersión propia de la bobina, su autoinductancia de magnetización, y el acople con las otras dos fases. Al operar balanceado, las corrientes de b y c «devuelven» media autoinductancia más, y aparece otra vez el 3/2 de la Sección 1."
+        analogy="Tres cuentas bancarias (propia, y los préstamos cruzados con b y c) consolidadas en un solo saldo. Después de consolidar, puedes operar como si hubiera UNA sola cuenta — ese saldo es Ls, y su versión en ohms es Xs."
+      >
+        <p className="mb-2">
+          El enlace de flujo de la fase a recibe cuatro contribuciones — su propia corriente, las de
+          las otras dos fases (bobinas a 120°: acople mutuo −½·L<sub>aa0</sub>) y el rotor:
+        </p>
+        <Formula
+          latex="\lambda_a = \underbrace{(L_{aa0}+L_{al})}_{L_{aa}}\,i_a \;\underbrace{-\tfrac{1}{2}L_{aa0}\,(i_b+i_c)}_{mutuas\ a\ 120^\circ} \;+\; \underbrace{L_{af}\cos\theta_{me}\cdot i_f}_{rotor}"
+          symbols={[
+            { sym: 'L_{aa0}', meaning: 'Componente de magnetización de la autoinductancia: el flujo de la fase a que cruza el entrehierro y podría enlazar a las demás.' },
+            { sym: 'L_{al}', meaning: 'Inductancia de dispersión: flujo que se cierra alrededor de la propia ranura sin cruzar el entrehierro. No participa del acople.' },
+            { sym: '-\\tfrac{1}{2}L_{aa0}', meaning: 'La mutua entre bobinas separadas 120°: cos(120°) = −½. El signo negativo es geometría pura.' },
+            { sym: 'L_{af}\\cos\\theta_{me}', meaning: 'La mutua estator-rotor VARÍA con la posición del rotor — de su giro nace la FEM (mira el mini-laboratorio).' },
+          ]}
+        />
+        <p className="mb-2">
+          Y aquí ocurre la consolidación: en un sistema balanceado{' '}
+          <InlineMath latex="i_b + i_c = -i_a" />, de modo que las mutuas dejan de ser un término
+          aparte y se pliegan sobre la propia corriente de a:
+        </p>
+        <Formula
+          latex="\lambda_a = \left(\tfrac{3}{2}L_{aa0} + L_{al}\right) i_a + \lambda_{af} \;\;\Rightarrow\;\; L_s = \tfrac{3}{2}L_{aa0} + L_{al}, \quad X_s = \omega_e L_s"
+          symbols={[
+            { sym: 'L_s', meaning: 'Inductancia sincrónica: TODO el efecto magnético del estator visto por una fase, ya consolidado. Vale solo en operación trifásica balanceada.' },
+            { sym: '\\tfrac{3}{2}', meaning: 'El mismo 3/2 de la FMM giratoria: las otras dos fases, vía sus mutuas de −½ y con ib+ic = −ia, aportan media Laa0 extra. Dos apariciones, una sola causa: la geometría a 120°.' },
+            { sym: '\\lambda_{af}', meaning: 'El enlace del rotor. Su derivada temporal (rotor girando a ωe) es la FEM interna: Eaf = ωe·Laf·If/√2 en valor eficaz.' },
+          ]}
+        />
+        <p>
+          Ese es todo el truco de FKU §5.2: la máquina trifásica, con sus seis acoples cruzados, se
+          convierte en un circuito monofásico de dos elementos. El precio del boleto: solo vale en
+          régimen balanceado — exactamente la letra pequeña que rompen los cortocircuitos asimétricos.
+        </p>
+        <InductanceLab />
+      </ConceptBlock>
+
+      <FeynmanCheck
+        id="s2-check-inductancias"
+        question="En Ls = (3/2)·Laa0 + Lal aparece otra vez un 3/2, igual que en la FMM giratoria de la Sección 1. ¿De dónde sale AQUÍ ese factor?"
+        options={[
+          {
+            label: 'Es la conversión de valor pico a eficaz (√2) redondeada.',
+            feedback:
+              'El 3/2 es exacto, no un redondeo — y las conversiones pico/eficaz traen √2, no 1.5. Su origen es estructural: cuenta cuántas fases participan y cómo están orientadas.',
+          },
+          {
+            label: 'Las mutuas con b y c valen −½·Laa0 cada una, y en balanceado ib+ic = −ia: las dos «devoluciones» de −½ por −ia suman +½·Laa0 extra sobre la propia Laa0.',
+            correct: true,
+            feedback:
+              'Exacto: Laa0·ia − ½Laa0(ib+ic) = Laa0·ia + ½Laa0·ia = (3/2)Laa0·ia. Es la MISMA física que hizo girar la FMM con amplitud 1.5·Fmax en la Sección 1: tres bobinas a 120° cooperando. Por eso Ls solo vale en operación balanceada — rompe esa condición y el 3/2 se desarma.',
+          },
+          {
+            label: 'Es un factor de seguridad que los diseñadores agregan a la inductancia.',
+            feedback:
+              'Nada de ingeniería defensiva: es geometría y álgebra. Dos mutuas de cos(120°) = −½ actuando sobre corrientes que suman −ia producen exactamente media autoinductancia adicional.',
+          },
+        ]}
+      />
+
       <PhasorLab />
 
       <FeynmanCheck
@@ -167,7 +230,7 @@ export default function Section2() {
       />
 
       <ConceptBlock
-        title="2.2 · Excitación a potencia constante: la curva V"
+        title="2.3 · Excitación a potencia constante: la curva V"
         idea="A potencia activa fija, la corriente de campo es la perilla de la potencia reactiva. Poca excitación: la máquina absorbe Q (subexcitada, corriente en adelanto). Mucha: entrega Q (sobreexcitada, corriente en atraso). En el punto justo, fp = 1 y la corriente de armadura es mínima — el fondo de la «V»."
         analogy="Es la caja de cambios reactiva de la red: el mismo camión (P) puede circular sobrado de revoluciones o escaso de ellas. El operador de la central mueve If durante todo el día exactamente igual que tú mueves este slider — para sostener la tensión de la red."
       >

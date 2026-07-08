@@ -37,7 +37,7 @@ const SECTIONS: SectionDef[] = [
     num: 2,
     short: 'Circuito y fasores',
     title: 'FEM interna y diagrama fasorial',
-    items: ['Eaf = Vt + jXs·Ia', 'La curva V de excitación', 'Problemas 2 y 3: sobre/subexcitado'],
+    items: ['Eaf = Vt + jXs·Ia', 'Inductancias: Ls = 3/2·Laa0 + Lal (§5.2)', 'La curva V de excitación', 'Problemas 2 y 3: sobre/subexcitado'],
     component: Section2,
   },
   {

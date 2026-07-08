@@ -21,6 +21,7 @@ export const ALL_CHECK_IDS = [
   's2-check-excitacion',
   's2-check-caida',
   's2-check-delta',
+  's2-check-inductancias',
   's2-check-vcurva',
   's2-problema-generador',
   's2-problema-adelanto',
