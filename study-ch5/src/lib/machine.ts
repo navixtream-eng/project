@@ -613,3 +613,67 @@ export const eaTimeToAngle = (
   H: number,
   f: number,
 ): number => Math.sqrt((4 * H * Math.max(0, deltaCl - delta0)) / (2 * Math.PI * f * Pm))
+
+// ---------------------------------------------------------------------------
+// Capítulo 3 — Conversión de energía electromecánica
+// ---------------------------------------------------------------------------
+
+/**
+ * Característica de magnetización saturable λ(i, g) de un sistema de
+ * excitación simple con entrehierro g [mm]. La pendiente (inductancia no
+ * saturada) crece al cerrar el gap; el codo λsat es fijo (lo pone el hierro).
+ */
+export const LAMBDA_SAT = 1.4 // Wb·vuelta (codo de saturación)
+export function lambdaOfI(i: number, gMm: number): number {
+  // Inductancia no saturada ∝ 1/g: gap chico ⇒ mucha pendiente.
+  const L0 = 0.9 / (gMm + 0.4)
+  return LAMBDA_SAT * Math.tanh((L0 * i) / LAMBDA_SAT)
+}
+/** Inversa: corriente necesaria para un enlace de flujo λ dado. */
+export function iOfLambda(lam: number, gMm: number): number {
+  const L0 = 0.9 / (gMm + 0.4)
+  const x = Math.max(-0.999, Math.min(0.999, lam / LAMBDA_SAT))
+  return (LAMBDA_SAT * Math.atanh(x)) / L0
+}
+/** Coenergía W'fld = ∫₀ⁱ λ di [J] (área BAJO la curva). */
+export function coenergy(i: number, gMm: number): number {
+  const n = 200
+  let s = 0
+  for (let k = 0; k < n; k++) s += lambdaOfI(((k + 0.5) / n) * i, gMm) * (i / n)
+  return s
+}
+/** Energía Wfld = ∫₀^λ i dλ [J] (área a la IZQUIERDA de la curva). */
+export function fieldEnergy(i: number, gMm: number): number {
+  const lam = lambdaOfI(i, gMm)
+  return lam * i - coenergy(i, gMm) // Wfld = λi − W'fld (el rectángulo menos la coenergía)
+}
+
+/** Fuerza de un actuador de émbolo: f = ½·μ₀N²A·i²/g² [N] (atractiva, cierra el gap). */
+export const MU0 = 4 * Math.PI * 1e-7
+export function actuatorForce(N: number, A: number, i: number, gMm: number): number {
+  const g = gMm / 1000
+  return (0.5 * MU0 * N * N * A * i * i) / (g * g)
+}
+export function actuatorL(N: number, A: number, gMm: number): number {
+  return (MU0 * N * N * A) / (gMm / 1000)
+}
+
+/** Par de un sistema de doble excitación: T = is·ir·dLsr/dθ = −M·is·ir·senθ [N·m]. */
+export function mutualTorque(M: number, is: number, ir: number, thetaRad: number): number {
+  return -M * is * ir * Math.sin(thetaRad)
+}
+
+/**
+ * Punto de operación de un imán permanente: intersección de la recta de
+ * carga (pendiente fija por la geometría del gap) con la curva de
+ * desmagnetización lineal Bm = Br + μrec·μ₀·Hm (segundo cuadrante).
+ * Devuelve (Hm < 0, Bm > 0) y el producto de energía |BH|.
+ */
+export function pmOperatingPoint(Br: number, muRec: number, permeance: number) {
+  // Recta de desmagnetización: Bm = Br + muRec·μ₀·Hm  (Hm en A/m)
+  // Recta de carga:          Bm = −permeance·μ₀·Hm     (permeance = Am·lm/(Ag·g))
+  const slopeMag = muRec * MU0
+  const Hm = -Br / (slopeMag + permeance * MU0)
+  const Bm = Br + slopeMag * Hm
+  return { Hm, Bm, energyProduct: Math.abs(Bm * Hm) }
+}
