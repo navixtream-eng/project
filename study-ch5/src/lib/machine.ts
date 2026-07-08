@@ -333,3 +333,86 @@ export function extractTestResults(m: OccModel, XsUnsat: number): TestResults {
     xsSat: 1 / sccCurrent(afnl, m, XsUnsat),
   }
 }
+
+// ---------------------------------------------------------------------------
+// Sección 6 — Pérdidas y rendimiento
+// ---------------------------------------------------------------------------
+
+export interface LossParams {
+  /** Resistencia de armadura Ra [pu] (incluye el efecto de pérdidas adicionales) */
+  Ra: number
+  /** Pérdidas mecánicas: fricción y ventilación [pu] (constantes a nₛ) */
+  Pfw: number
+  /** Pérdidas en el hierro del núcleo [pu] (constantes a Vt nominal) */
+  Pcore: number
+  /** Coeficiente de pérdidas de campo: Pf = kf·Eaf² [pu] (If ∝ Eaf en zona lineal) */
+  kField: number
+}
+
+export interface LossBreakdown {
+  /** Fricción y ventilación [pu] */
+  mech: number
+  /** Núcleo (histéresis + Foucault) [pu] */
+  core: number
+  /** Devanado de campo [pu] */
+  field: number
+  /** Cobre de armadura Ia²·Ra [pu] */
+  copper: number
+  total: number
+  /** Potencia mecánica de entrada P + pérdidas [pu] */
+  input: number
+  /** Rendimiento η = P/(P + pérdidas) */
+  eta: number
+  /** Corriente de armadura del punto [pu] */
+  IaMag: number
+  /** FEM interna del punto [pu] */
+  EafMag: number
+}
+
+/**
+ * Desglose de pérdidas de un generador entregando P con el fp dado.
+ * El cobre crece con Ia² (variable); fricción y núcleo son fijas; el campo
+ * sigue a la excitación requerida por el punto de operación (vía Eaf).
+ */
+export function computeLosses(
+  P: number,
+  pf: number,
+  lagging: boolean,
+  Vt: number,
+  Xs: number,
+  params: LossParams,
+): LossBreakdown {
+  const IaMag = P > 0 ? P / (Vt * pf) : 0
+  const sol = solveFromPf(Vt, IaMag, pf, lagging, Xs)
+  const copper = IaMag * IaMag * params.Ra
+  const field = params.kField * sol.EafMag * sol.EafMag
+  const total = params.Pfw + params.Pcore + field + copper
+  const input = P + total
+  return {
+    mech: params.Pfw,
+    core: params.Pcore,
+    field,
+    copper,
+    total,
+    input,
+    eta: P > 0 ? P / input : 0,
+    IaMag,
+    EafMag: sol.EafMag,
+  }
+}
+
+/** Punto de rendimiento máximo: barrido numérico de la carga P. */
+export function findMaxEfficiency(
+  pf: number,
+  lagging: boolean,
+  Vt: number,
+  Xs: number,
+  params: LossParams,
+): { P: number; eta: number } {
+  let best = { P: 0, eta: 0 }
+  for (let p = 0.02; p <= 1.3001; p += 0.005) {
+    const { eta } = computeLosses(p, pf, lagging, Vt, Xs, params)
+    if (eta > best.eta) best = { P: p, eta }
+  }
+  return best
+}

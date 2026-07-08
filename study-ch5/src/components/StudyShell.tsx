@@ -14,6 +14,7 @@ import Section2 from '../sections/Section2'
 import Section3 from '../sections/Section3'
 import Section4 from '../sections/Section4'
 import Section5 from '../sections/Section5'
+import Section6 from '../sections/Section6'
 
 interface SectionDef {
   num: number
@@ -59,6 +60,13 @@ const SECTIONS: SectionDef[] = [
     title: 'Ensayos OCC/SCC y saturación',
     items: ['La curva que se dobla y la recta que no', 'Xs saturada, no saturada y SCR', 'Problemas 8 y 9: parámetros del ensayo'],
     component: Section5,
+  },
+  {
+    num: 6,
+    short: 'Rendimiento',
+    title: 'Pérdidas y rendimiento',
+    items: ['Costos fijos vs variables', 'η máximo: variables = fijas', 'Problemas 10 y 11: desglose y punto dulce'],
+    component: Section6,
   },
 ]
 
