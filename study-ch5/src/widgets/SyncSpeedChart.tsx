@@ -30,7 +30,7 @@ export default function SyncSpeedChart() {
   )
 
   return (
-    <div className="my-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3">
+    <div className="lab-panel my-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3">
       <h4 className="mb-2 px-1 text-xs font-semibold text-zinc-400">
         Velocidad síncrona vs. número de polos
       </h4>

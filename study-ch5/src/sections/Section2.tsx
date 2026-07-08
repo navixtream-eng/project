@@ -13,7 +13,7 @@ const C = { Vt: '#3987e5', Ia: '#c98500', jXsIa: '#9085e9', Eaf: '#e66767' }
 /** Circuito equivalente por fase: fuente Eaf + reactancia sincrónica Xs. */
 function EquivalentCircuit() {
   return (
-    <figure className="my-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+    <figure className="lab-panel my-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
       <svg viewBox="0 0 640 200" className="mx-auto w-full max-w-xl">
         {/* Fuente Eaf */}
         <circle cx="80" cy="100" r="30" fill="none" stroke={C.Eaf} strokeWidth="2.5" />

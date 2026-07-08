@@ -127,7 +127,7 @@ export default function C6Section4() {
         idea="Cada circuito cerrado que agregues al rotor añade un peldaño a la escalera de reactancias y un reloj a la dinámica. El devanado de campo crea el nivel transitorio del eje d (X′d, T′d). Los amortiguadores crean el subtransitorio en AMBOS ejes (X″d, X″q, T″d). Y en el eje q de un rotor de polos salientes no hay devanado de campo — por eso X′q ≈ Xq: ese peldaño no existe."
         analogy="Capas de abrigo: cada prenda extra (devanado) frena el escape del calor (flujo) con su propio ritmo. El eje d lleva dos abrigos (campo + amortiguador); el eje q de polos salientes lleva solo uno (amortiguador) — y contra el frío repentino, se nota."
       >
-        <div className="my-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+        <div className="lab-panel my-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
           <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
             La escalera de reactancias (valores típicos, pu)
           </p>

@@ -70,3 +70,69 @@ input[type="range"]::-moz-range-thumb {
 .katex {
   color: var(--color-zinc-100);
 }
+
+/* ---------------------------------------------------------------------------
+   Tema CLARO: remapea las variables de color de Tailwind bajo data-theme.
+   Los paneles de laboratorio (.lab-panel) re-fijan la escala oscura local-
+   mente: los instrumentos conservan su fondo oscuro (y su paleta validada).
+--------------------------------------------------------------------------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+  /* Escala zinc invertida */
+  --color-zinc-950: #f7f7f5;
+  --color-zinc-900: #eeedeb;
+  --color-zinc-800: #dedcd6;
+  --color-zinc-700: #c6c4bd;
+  --color-zinc-600: #8e8d87;
+  --color-zinc-500: #6b6a64;
+  --color-zinc-400: #514f4b;
+  --color-zinc-300: #3b3a36;
+  --color-zinc-200: #2b2a27;
+  --color-zinc-100: #181815;
+  --color-zinc-50: #0c0c0b;
+  /* Acentos de texto: pasos claros → tonos oscuros legibles sobre claro */
+  --color-emerald-200: #065f46;
+  --color-emerald-300: #047857;
+  --color-emerald-400: #059669;
+  --color-amber-200: #92400e;
+  --color-amber-300: #b45309;
+  --color-amber-400: #d97706;
+  --color-red-200: #991b1b;
+  --color-red-300: #b91c1c;
+  --color-red-400: #dc2626;
+  --color-sky-200: #075985;
+  --color-sky-300: #0369a1;
+  --color-sky-400: #0284c7;
+  --color-violet-300: #6d28d9;
+  --color-violet-400: #7c3aed;
+}
+
+/* Los laboratorios permanecen como pantallas de instrumento (oscuras) */
+:root[data-theme="light"] .lab-panel {
+  color-scheme: dark;
+  --color-zinc-950: #09090b;
+  --color-zinc-900: #18181b;
+  --color-zinc-800: #27272a;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-600: #52525b;
+  --color-zinc-500: #71717a;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-50: #fafafa;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-amber-200: #fde68a;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-red-200: #fecaca;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-sky-200: #bae6fd;
+  --color-sky-300: #7dd3fc;
+  --color-sky-400: #38bdf8;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+}

@@ -5,7 +5,9 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
+  Moon,
   RotateCcw,
+  Sun,
   Zap,
 } from 'lucide-react'
 import { ALL_CHECK_IDS, useProgress } from './ProgressContext'
@@ -131,6 +133,19 @@ const CHAPTERS: { id: 5 | 6; label: string; sub: string }[] = [
 ]
 
 const ACTIVE_KEY = 'fku-ch5-active-section'
+const THEME_KEY = 'fku-theme'
+
+type Theme = 'dark' | 'light'
+
+function loadTheme(): Theme {
+  try {
+    const t = localStorage.getItem(THEME_KEY)
+    if (t === 'light' || t === 'dark') return t
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  } catch {
+    return 'dark'
+  }
+}
 
 function loadActive(): number {
   try {
@@ -149,6 +164,16 @@ function loadActive(): number {
 export default function StudyShell() {
   const { percent, completed, reset } = useProgress()
   const [active, setActive] = useState(loadActive)
+  const [theme, setTheme] = useState<Theme>(loadTheme)
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    try {
+      localStorage.setItem(THEME_KEY, theme)
+    } catch {
+      /* sin almacenamiento: el tema no persiste */
+    }
+  }, [theme])
 
   useEffect(() => {
     try {
@@ -226,6 +251,15 @@ export default function StudyShell() {
               )
             })}
           </div>
+          <button
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            title={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+            aria-label={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-700 text-zinc-400 transition-colors hover:border-emerald-500/50 hover:text-emerald-400"
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
           <div className="hidden items-center gap-2 sm:flex">
             <div className="h-2 w-24 overflow-hidden rounded-full bg-zinc-800">
               <div

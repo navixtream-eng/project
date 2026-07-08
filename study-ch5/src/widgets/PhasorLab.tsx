@@ -139,7 +139,7 @@ export default function PhasorLab() {
   ]
 
   return (
-    <div className="my-6 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/60">
+    <div className="lab-panel my-6 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/60">
       <header className="flex items-center gap-2 border-b border-zinc-800 bg-zinc-900/70 px-4 py-2">
         <FlaskConical size={14} className="text-emerald-400" />
         <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
