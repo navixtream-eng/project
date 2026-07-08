@@ -26,12 +26,16 @@ import C4Section2 from '../sections/C4Section2'
 import C4Section3 from '../sections/C4Section3'
 import C1Section1 from '../sections/C1Section1'
 import C1Section2 from '../sections/C1Section2'
+import C2Section1 from '../sections/C2Section1'
+import C2Section2 from '../sections/C2Section2'
+import C2Section3 from '../sections/C2Section3'
 
-type ChapterId = 1 | 4 | 5 | 6
+type ChapterId = 1 | 2 | 4 | 5 | 6
 
 /** Acentos por capítulo: violeta (magnetismo), cian (fundamentos), esmeralda (régimen), rojo (transitorios) */
 const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: string; num: string; boxOn: string; lbl: string }> = {
   1: { tab: 'text-violet-300', btnOn: 'border-violet-500/50 bg-violet-500/10', btnTxt: 'text-violet-300', box: 'border-violet-500/30', num: 'text-violet-400', boxOn: 'border-violet-500/40 bg-violet-500/5', lbl: 'text-violet-400/70' },
+  2: { tab: 'text-amber-300', btnOn: 'border-amber-500/50 bg-amber-500/10', btnTxt: 'text-amber-300', box: 'border-amber-500/30', num: 'text-amber-400', boxOn: 'border-amber-500/40 bg-amber-500/5', lbl: 'text-amber-400/70' },
   4: { tab: 'text-sky-300', btnOn: 'border-sky-500/50 bg-sky-500/10', btnTxt: 'text-sky-300', box: 'border-sky-500/30', num: 'text-sky-400', boxOn: 'border-sky-500/40 bg-sky-500/5', lbl: 'text-sky-400/70' },
   5: { tab: 'text-emerald-300', btnOn: 'border-emerald-500/50 bg-emerald-500/10', btnTxt: 'text-emerald-300', box: 'border-emerald-500/30', num: 'text-emerald-400', boxOn: 'border-emerald-500/40 bg-emerald-500/5', lbl: 'text-emerald-500/70' },
   6: { tab: 'text-red-300', btnOn: 'border-red-500/50 bg-red-500/10', btnTxt: 'text-red-300', box: 'border-red-500/30', num: 'text-red-400', boxOn: 'border-red-500/40 bg-red-500/5', lbl: 'text-red-400/70' },
@@ -67,6 +71,33 @@ const SECTIONS: SectionDef[] = [
     title: 'Materiales: histéresis, pérdidas y excitación CA',
     items: ['Ciclo de histéresis: Br, Hc y su área', 'Foucault y laminaciones (1/n²)', 'Corriente picuda y 3er armónico', 'Problema 20: separar las pérdidas'],
     component: C1Section2,
+  },
+  {
+    chapter: 2,
+    num: 1,
+    prefix: 'c2s1-',
+    short: 'Ideal',
+    title: 'El transformador ideal',
+    items: ['V₁/V₂ = a, I₁/I₂ = 1/a', 'Reflexión: Z′ = a²Z', 'Problema 21: el transformador de distribución'],
+    component: C2Section1,
+  },
+  {
+    chapter: 2,
+    num: 2,
+    prefix: 'c2s2-',
+    short: 'Real y ensayos',
+    title: 'Circuito equivalente y ensayos OC/SC',
+    items: ['El circuito por capas (R, X, Rc∥Xm)', 'OC mide el hierro · SC mide el cobre', 'Problema 22: del laboratorio al circuito'],
+    component: C2Section2,
+  },
+  {
+    chapter: 2,
+    num: 3,
+    prefix: 'c2s3-',
+    short: 'VR, η y pu',
+    title: 'Regulación, eficiencia, por unidad y variantes',
+    items: ['VR% y el fp que la dirige', 'pu: el a² desaparece', 'Auto y trifásicos (±30°)', 'Problema 23: VR y η del medido'],
+    component: C2Section3,
   },
   {
     chapter: 4,
@@ -189,6 +220,7 @@ const SECTIONS: SectionDef[] = [
 
 const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
   { id: 1, label: 'Capítulo 1', sub: 'Circuitos magnéticos' },
+  { id: 2, label: 'Capítulo 2', sub: 'Transformadores' },
   { id: 4, label: 'Capítulo 4', sub: 'Conceptos básicos' },
   { id: 5, label: 'Capítulo 5', sub: 'Régimen permanente' },
   { id: 6, label: 'Capítulo 6', sub: 'Régimen transitorio' },
@@ -468,6 +500,7 @@ export default function StudyShell() {
                 <span className="font-mono text-emerald-300">{percent}%</span>) solo avanza cuando
                 superas predicciones y problemas. Arriba a la derecha eliges el capítulo:{' '}
                 <span className="text-violet-300">1 · Circuitos magnéticos</span>,{' '}
+                <span className="text-amber-300">2 · Transformadores</span>,{' '}
                 <span className="text-sky-300">4 · Conceptos básicos</span>,{' '}
                 <span className="text-emerald-300">5 · Régimen permanente</span> o{' '}
                 <span className="text-red-300">6 · Régimen transitorio</span>.
