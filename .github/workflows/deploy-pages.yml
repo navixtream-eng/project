@@ -5,7 +5,8 @@ name: Deploy study app to GitHub Pages
 
 on:
   push:
-    branches: [master, main]
+    # Incluye la rama de trabajo: cada entrega publicada aquí se despliega sola
+    branches: [master, main, claude/sync-machine-simulator-5lwv3c]
     paths: ['study-ch5/**']
   workflow_dispatch:
 
