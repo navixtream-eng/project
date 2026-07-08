@@ -15,9 +15,15 @@ import Section3 from '../sections/Section3'
 import Section4 from '../sections/Section4'
 import Section5 from '../sections/Section5'
 import Section6 from '../sections/Section6'
+import C6Section1 from '../sections/C6Section1'
+import C6Section2 from '../sections/C6Section2'
+import C6Section3 from '../sections/C6Section3'
 
 interface SectionDef {
+  chapter: 5 | 6
   num: number
+  /** Prefijo de los ids de hitos de esta sección (ProgressContext) */
+  prefix: string
   /** Título corto para la pestaña */
   short: string
   title: string
@@ -27,47 +33,91 @@ interface SectionDef {
 
 const SECTIONS: SectionDef[] = [
   {
+    chapter: 5,
     num: 1,
+    prefix: 's1-',
     short: 'Campo giratorio',
     title: 'Campo giratorio y velocidad síncrona',
     items: ['El truco del imán giratorio', 'nₛ = 120f/p', 'Problema 1: central hidroeléctrica'],
     component: Section1,
   },
   {
+    chapter: 5,
     num: 2,
+    prefix: 's2-',
     short: 'Circuito y fasores',
     title: 'FEM interna y diagrama fasorial',
     items: ['Eaf = Vt + jXs·Ia', 'Inductancias: Ls = 3/2·Laa0 + Lal (§5.2)', 'La curva V de excitación', 'Problemas 2 y 3: sobre/subexcitado'],
     component: Section2,
   },
   {
+    chapter: 5,
     num: 3,
+    prefix: 's3-',
     short: 'Potencia-ángulo',
     title: 'Potencia-ángulo y barra infinita',
     items: ['P = Eaf·Vt·sen δ / Xs', 'Los dos mandos y el par sincronizante', 'Problemas 4 y 5: margen y pérdida de paso'],
     component: Section3,
   },
   {
+    chapter: 5,
     num: 4,
+    prefix: 's4-',
     short: 'Capacidad y motor',
     title: 'Curvas de capacidad y motor sincrónico',
     items: ['La carta de operación P-Q', 'Motor: δ < 0, el campo arrastra', 'Problemas 6 y 7: carta y compensador'],
     component: Section4,
   },
   {
+    chapter: 5,
     num: 5,
+    prefix: 's5-',
     short: 'Ensayos OCC/SCC',
     title: 'Ensayos OCC/SCC y saturación',
     items: ['La curva que se dobla y la recta que no', 'Xs saturada, no saturada y SCR', 'Problemas 8 y 9: parámetros del ensayo'],
     component: Section5,
   },
   {
+    chapter: 5,
     num: 6,
+    prefix: 's6-',
     short: 'Rendimiento',
     title: 'Pérdidas y rendimiento',
-    items: ['Costos fijos vs variables', 'η máximo: variables = fijas', 'Problemas 10 y 11: desglose y punto dulce'],
+    items: ['Costos fijos vs variables', 'η máximo: cuadráticas = resto', 'Problemas 10 y 11: desglose y punto dulce'],
     component: Section6,
   },
+  {
+    chapter: 6,
+    num: 1,
+    prefix: 'c6s1-',
+    short: 'Flujo y Park',
+    title: 'Del permanente al transitorio: flujo atrapado y Park',
+    items: ['λ(0⁺) = λ(0⁻): el teorema del flujo', 'La transformación d-q-0', 'Problema 12: E′ tras X′d'],
+    component: C6Section1,
+  },
+  {
+    chapter: 6,
+    num: 2,
+    prefix: 'c6s2-',
+    short: 'Cortocircuito',
+    title: 'El cortocircuito trifásico súbito',
+    items: ['Tres periodos: X″d, X′d, Xd y sus T', 'El offset DC y el instante α', 'Problema 13: biografía de una falla'],
+    component: C6Section2,
+  },
+  {
+    chapter: 6,
+    num: 3,
+    prefix: 'c6s3-',
+    short: 'Estabilidad',
+    title: 'Dinámica y estabilidad: E′ y la ecuación de oscilación',
+    items: ['El modelo E′ tras X′d', 'La ecuación de oscilación y t_cr', 'Problema 14: presupuesto de las protecciones'],
+    component: C6Section3,
+  },
+]
+
+const CHAPTERS: { id: 5 | 6; label: string; sub: string }[] = [
+  { id: 5, label: 'Capítulo 5', sub: 'Régimen permanente' },
+  { id: 6, label: 'Capítulo 6', sub: 'Régimen transitorio' },
 ]
 
 const ACTIVE_KEY = 'fku-ch5-active-section'
@@ -82,8 +132,8 @@ function loadActive(): number {
 }
 
 /**
- * Cascarón del documento: navegación por PESTAÑAS (una por sección), con
- * progreso individual por pestaña, índice lateral de la sección activa y
+ * Cascarón del documento: selector de capítulo + pestañas por sección,
+ * con progreso individual por pestaña y por capítulo, índice lateral y
  * botones anterior/siguiente. La sección activa persiste entre visitas.
  */
 export default function StudyShell() {
@@ -99,15 +149,30 @@ export default function StudyShell() {
     window.scrollTo({ top: 0 })
   }, [active])
 
-  /** Hitos (chequeos + problemas) de una sección: total y completados. */
-  const sectionProgress = (num: number) => {
-    const ids = ALL_CHECK_IDS.filter((id) => id.startsWith(`s${num}-`))
-    const done = ids.filter((id) => completed.has(id)).length
-    return { done, total: ids.length }
+  const sectionProgress = (def: SectionDef) => {
+    const ids = ALL_CHECK_IDS.filter((id) => id.startsWith(def.prefix))
+    return { done: ids.filter((id) => completed.has(id)).length, total: ids.length }
+  }
+  const chapterProgress = (ch: 5 | 6) => {
+    const defs = SECTIONS.filter((s) => s.chapter === ch)
+    return defs.reduce(
+      (acc, d) => {
+        const p = sectionProgress(d)
+        return { done: acc.done + p.done, total: acc.total + p.total }
+      },
+      { done: 0, total: 0 },
+    )
   }
 
   const section = SECTIONS[active]
+  const activeChapter = section.chapter
+  const chapterSections = SECTIONS.filter((s) => s.chapter === activeChapter)
   const ActiveSection = section.component
+
+  const goToChapter = (ch: 5 | 6) => {
+    if (ch === activeChapter) return
+    setActive(SECTIONS.findIndex((s) => s.chapter === ch))
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -117,14 +182,42 @@ export default function StudyShell() {
           <GraduationCap size={24} className="shrink-0 text-emerald-400" />
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-sm font-black tracking-wide sm:text-base">
-              Máquinas Sincrónicas · Capítulo 5
+              Máquinas Sincrónicas · Documento de Estudio
             </h1>
             <p className="hidden text-[11px] text-zinc-500 sm:block">
-              Documento de estudio interactivo · basado en Fitzgerald–Kingsley–Umans, <em>Máquinas Eléctricas</em>
+              Interactivo · basado en Fitzgerald–Kingsley–Umans, <em>Máquinas Eléctricas</em>
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-28 overflow-hidden rounded-full bg-zinc-800 sm:w-40">
+          {/* Selector de capítulo con progreso propio */}
+          <div className="flex gap-1.5">
+            {CHAPTERS.map((ch) => {
+              const p = chapterProgress(ch.id)
+              const isActive = ch.id === activeChapter
+              return (
+                <button
+                  key={ch.id}
+                  type="button"
+                  onClick={() => goToChapter(ch.id)}
+                  className={`rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
+                    isActive
+                      ? ch.id === 5
+                        ? 'border-emerald-500/50 bg-emerald-500/10'
+                        : 'border-red-500/50 bg-red-500/10'
+                      : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-600'
+                  }`}
+                >
+                  <span className={`block text-[11px] font-black ${isActive ? (ch.id === 5 ? 'text-emerald-300' : 'text-red-300') : 'text-zinc-400'}`}>
+                    {ch.label}
+                  </span>
+                  <span className="block text-[9px] text-zinc-500">
+                    {ch.sub} · <span className="font-mono">{p.done}/{p.total}</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <div className="hidden items-center gap-2 sm:flex">
+            <div className="h-2 w-24 overflow-hidden rounded-full bg-zinc-800">
               <div
                 className="h-full rounded-full bg-emerald-500 transition-all duration-500"
                 style={{ width: `${percent}%` }}
@@ -146,20 +239,22 @@ export default function StudyShell() {
           </div>
         </div>
 
-        {/* Barra de pestañas: una por sección, con progreso individual */}
+        {/* Barra de pestañas del capítulo activo */}
         <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-0 pt-2">
-          {SECTIONS.map((s, i) => {
-            const { done, total } = sectionProgress(s.num)
-            const isActive = i === active
+          {chapterSections.map((s) => {
+            const { done, total } = sectionProgress(s)
+            const flatIndex = SECTIONS.indexOf(s)
+            const isActive = flatIndex === active
             const complete = done === total
+            const accent = s.chapter === 5 ? 'text-emerald-300' : 'text-red-300'
             return (
               <button
-                key={s.num}
+                key={s.prefix}
                 type="button"
-                onClick={() => setActive(i)}
+                onClick={() => setActive(flatIndex)}
                 className={`flex shrink-0 items-center gap-2 rounded-t-lg border-x border-t px-3 py-2 text-xs font-semibold transition-colors ${
                   isActive
-                    ? 'border-zinc-700 bg-zinc-900 text-emerald-300'
+                    ? `border-zinc-700 bg-zinc-900 ${accent}`
                     : 'border-transparent bg-transparent text-zinc-500 hover:bg-zinc-900/50 hover:text-zinc-300'
                 }`}
               >
@@ -188,14 +283,16 @@ export default function StudyShell() {
 
       <div className="mx-auto flex max-w-6xl gap-8 px-4 py-8">
         {/* Índice lateral de la sección activa */}
-        <aside className="sticky top-28 hidden h-fit w-64 shrink-0 lg:block">
+        <aside className="sticky top-32 hidden h-fit w-64 shrink-0 lg:block">
           <p className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
             <BookOpenText size={13} />
             En esta sección
           </p>
-          <div className="rounded-xl border border-emerald-500/30 bg-zinc-900/50 p-3">
+          <div className={`rounded-xl border p-3 ${activeChapter === 5 ? 'border-emerald-500/30' : 'border-red-500/30'} bg-zinc-900/50`}>
             <p className="text-xs font-bold text-zinc-200">
-              <span className="mr-1.5 text-emerald-400">{section.num}.</span>
+              <span className={`mr-1.5 ${activeChapter === 5 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {activeChapter}.{section.num}
+              </span>
               {section.title}
             </p>
             <ul className="mt-1.5 space-y-0.5">
@@ -208,28 +305,35 @@ export default function StudyShell() {
           </div>
 
           <p className="mb-2 mt-4 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
-            Todas las secciones
+            Todo el documento
           </p>
           <nav className="space-y-1">
             {SECTIONS.map((s, i) => {
-              const { done, total } = sectionProgress(s.num)
+              const { done, total } = sectionProgress(s)
+              const first = i === 0 || SECTIONS[i - 1].chapter !== s.chapter
               return (
-                <button
-                  key={s.num}
-                  type="button"
-                  onClick={() => setActive(i)}
-                  className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[11px] transition-colors ${
-                    i === active
-                      ? 'border-emerald-500/40 bg-emerald-500/5 text-zinc-200'
-                      : 'border-zinc-800 bg-zinc-900/40 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300'
-                  }`}
-                >
-                  <span className="font-bold text-emerald-400">{s.num}</span>
-                  <span className="flex-1 truncate">{s.short}</span>
-                  <span className={`font-mono text-[10px] ${done === total ? 'text-emerald-400' : 'text-zinc-600'}`}>
-                    {done}/{total}
-                  </span>
-                </button>
+                <div key={s.prefix}>
+                  {first && (
+                    <p className={`mb-1 mt-2 text-[9px] font-black uppercase tracking-widest ${s.chapter === 5 ? 'text-emerald-500/70' : 'text-red-400/70'}`}>
+                      Capítulo {s.chapter}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setActive(i)}
+                    className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[11px] transition-colors ${
+                      i === active
+                        ? `${s.chapter === 5 ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-red-500/40 bg-red-500/5'} text-zinc-200`
+                        : 'border-zinc-800 bg-zinc-900/40 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300'
+                    }`}
+                  >
+                    <span className={`font-bold ${s.chapter === 5 ? 'text-emerald-400' : 'text-red-400'}`}>{s.num}</span>
+                    <span className="flex-1 truncate">{s.short}</span>
+                    <span className={`font-mono text-[10px] ${done === total ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                      {done}/{total}
+                    </span>
+                  </button>
+                </div>
               )
             })}
           </nav>
@@ -251,7 +355,7 @@ export default function StudyShell() {
             <div className="mb-10 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-transparent p-6">
               <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-emerald-400">
                 <Zap size={13} />
-                Cómo absorber este capítulo
+                Cómo absorber este documento
               </p>
               <p className="text-sm leading-relaxed text-zinc-300">
                 Este documento no se puede «leer»: se <strong>trabaja</strong>. Cada concepto llega en
@@ -260,15 +364,16 @@ export default function StudyShell() {
                 física real (las mismas ecuaciones del libro, resueltas en vivo), y los problemas se
                 revelan paso a paso con el <em>porqué</em> antes del <em>cómo</em>. Tu progreso (
                 <span className="font-mono text-emerald-300">{percent}%</span>) solo avanza cuando
-                superas predicciones y problemas — no cuando haces scroll. Navega con las pestañas de
-                arriba: cada una es un tema autocontenido.
+                superas predicciones y problemas. Arriba a la derecha eliges el capítulo:{' '}
+                <span className="text-emerald-300">5 · Régimen permanente</span> o{' '}
+                <span className="text-red-300">6 · Régimen transitorio</span>.
               </p>
             </div>
           )}
 
           <ActiveSection />
 
-          {/* Navegación anterior / siguiente */}
+          {/* Navegación anterior / siguiente (cruza capítulos) */}
           <div className="mt-10 flex items-stretch gap-3 border-t border-zinc-800 pt-6">
             {active > 0 ? (
               <button
@@ -280,7 +385,7 @@ export default function StudyShell() {
                 <span>
                   <span className="block text-[10px] uppercase tracking-wide text-zinc-500">Anterior</span>
                   <span className="block text-xs font-semibold text-zinc-200">
-                    {SECTIONS[active - 1].num}. {SECTIONS[active - 1].title}
+                    C{SECTIONS[active - 1].chapter}·{SECTIONS[active - 1].num}. {SECTIONS[active - 1].title}
                   </span>
                 </span>
               </button>
@@ -296,25 +401,25 @@ export default function StudyShell() {
                 <span>
                   <span className="block text-[10px] uppercase tracking-wide text-zinc-500">Siguiente</span>
                   <span className="block text-xs font-semibold text-zinc-200">
-                    {SECTIONS[active + 1].num}. {SECTIONS[active + 1].title}
+                    C{SECTIONS[active + 1].chapter}·{SECTIONS[active + 1].num}. {SECTIONS[active + 1].title}
                   </span>
                 </span>
                 <ChevronRight size={18} className="shrink-0 text-emerald-400" />
               </button>
             ) : (
               <span className="flex flex-1 items-center justify-end rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs font-semibold text-emerald-300">
-                Fin del capítulo — ¡revisa tu progreso en las pestañas! 🎓
+                Fin del documento — ¡revisa tu progreso en las pestañas! 🎓
               </span>
             )}
           </div>
 
           <footer className="mt-10 border-t border-zinc-800 pt-6 pb-10 text-center text-[11px] leading-relaxed text-zinc-600">
-            Documento de estudio interactivo · Capítulo 5, <em>Máquinas Eléctricas</em> (Fitzgerald,
-            Kingsley &amp; Umans) · Los valores numéricos de los problemas se calculan en vivo con el
-            mismo motor de los laboratorios.
+            Documento de estudio interactivo · Capítulos 5 (régimen permanente) y 6 (transitorios),{' '}
+            <em>Máquinas Eléctricas</em> (Fitzgerald, Kingsley &amp; Umans) · Los valores numéricos de
+            los problemas se calculan en vivo con el mismo motor de los laboratorios.
             <br />
-            Con esto queda cubierto el núcleo del Capítulo 5. Posibles extensiones: pérdidas y
-            rendimiento, y el puente hacia los transitorios (simulador SyncLab).
+            El fenómeno transitorio completo — corrientes, fasores animados y criterio de áreas
+            iguales — vive en el simulador SyncLab de este mismo repositorio.
           </footer>
         </main>
       </div>

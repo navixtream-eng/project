@@ -416,3 +416,164 @@ export function findMaxEfficiency(
   }
   return best
 }
+
+// ---------------------------------------------------------------------------
+// Capítulo 6 — Régimen transitorio
+// ---------------------------------------------------------------------------
+
+export interface TransientParams {
+  /** Reactancia sincrónica de eje d [pu] */
+  Xd: number
+  /** Reactancia transitoria X'd [pu] */
+  Xd1: number
+  /** Reactancia subtransitoria X''d [pu] */
+  Xd2: number
+  /** Constante de tiempo transitoria de cortocircuito T'd [s] */
+  Td1: number
+  /** Constante de tiempo subtransitoria T''d [s] */
+  Td2: number
+  /** Constante de tiempo de armadura Ta [s] (decaimiento del offset DC) */
+  Ta: number
+  /** Frecuencia [Hz] */
+  f: number
+}
+
+export const DEFAULT_TRANSIENT: TransientParams = {
+  Xd: 1.1, // la Xs saturada medida en la Sección 5
+  Xd1: 0.3,
+  Xd2: 0.2,
+  Td1: 1.0,
+  Td2: 0.035,
+  Ta: 0.15,
+  f: 60,
+}
+
+/** Niveles eficaces de la corriente de falla (máquina previamente en vacío con E pu). */
+export function scLevels(E: number, p: TransientParams) {
+  return { Isub: E / p.Xd2, Itrans: E / p.Xd1, Iss: E / p.Xd }
+}
+
+/**
+ * Envolvente eficaz de la corriente de cortocircuito trifásico:
+ * I(t) = (I''−I')e^(−t/T''d) + (I'−Iss)e^(−t/T'd) + Iss
+ */
+export function scEnvelope(t: number, E: number, p: TransientParams): number {
+  const { Isub, Itrans, Iss } = scLevels(E, p)
+  return (
+    (Isub - Itrans) * Math.exp(-t / p.Td2) +
+    (Itrans - Iss) * Math.exp(-t / p.Td1) +
+    Iss
+  )
+}
+
+/**
+ * Corriente instantánea de la fase a tras una falla en t = 0 con la máquina
+ * en vacío. α es el ángulo de la tensión de la fase en el instante de la
+ * falla: fija el offset DC (α = 0 → asimetría máxima; α = ±90° → onda
+ * simétrica). El offset garantiza i(0) = 0 (el flujo no puede saltar).
+ */
+export function scPhaseCurrent(
+  t: number,
+  alpha: number,
+  E: number,
+  p: TransientParams,
+): number {
+  const w = 2 * Math.PI * p.f
+  const ac = Math.SQRT2 * scEnvelope(t, E, p) * Math.cos(w * t + alpha - Math.PI / 2)
+  const dc = -Math.SQRT2 * (E / p.Xd2) * Math.cos(alpha - Math.PI / 2) * Math.exp(-t / p.Ta)
+  return ac + dc
+}
+
+// --- Ecuación de oscilación (modelo E' tras X'd contra barra infinita) -----
+
+export interface SwingSample {
+  t: number
+  /** Ángulo de carga [rad] */
+  delta: number
+  /** Desviación de velocidad [rad/s] */
+  dOmega: number
+}
+
+export interface SwingResult {
+  samples: SwingSample[]
+  stable: boolean
+  lossOfSyncTime: number | null
+  maxDelta: number
+}
+
+/**
+ * Integra (2H/ωs)·δ̈ = Pm − Pe − D·Δω/ωs con RK4. Durante la falla
+ * trifásica en bornes Pe = 0; tras el despeje, Pe = (E'·Vt/X'd)·sen δ.
+ */
+export function swingSimulation(
+  Pm: number,
+  Eprime: number,
+  Vt: number,
+  Xd1: number,
+  H: number,
+  D: number,
+  f: number,
+  tClear: number,
+  tEnd = 5,
+  dt = 0.002,
+): SwingResult {
+  const ws = 2 * Math.PI * f
+  const pMaxPost = (Eprime * Vt) / Xd1
+  const delta0 = Math.asin(Math.min(1, Pm / pMaxPost))
+  const pe = (t: number, d: number) => (t < tClear ? 0 : pMaxPost * Math.sin(d))
+  const acc = (t: number, d: number, w: number) =>
+    (ws / (2 * H)) * (Pm - pe(t, d) - (D * w) / ws)
+
+  const samples: SwingSample[] = []
+  let delta = delta0
+  let dOmega = 0
+  let stable = true
+  let lossOfSyncTime: number | null = null
+  let maxDelta = delta
+
+  const steps = Math.ceil(tEnd / dt)
+  for (let i = 0; i <= steps; i++) {
+    const t = i * dt
+    if (i % 5 === 0) samples.push({ t, delta, dOmega })
+    if (delta > maxDelta) maxDelta = delta
+    if (stable && delta > Math.PI && dOmega > 0) {
+      stable = false
+      lossOfSyncTime = t
+    }
+    const k1d = dOmega
+    const k1w = acc(t, delta, dOmega)
+    const k2d = dOmega + (dt / 2) * k1w
+    const k2w = acc(t + dt / 2, delta + (dt / 2) * k1d, dOmega + (dt / 2) * k1w)
+    const k3d = dOmega + (dt / 2) * k2w
+    const k3w = acc(t + dt / 2, delta + (dt / 2) * k2d, dOmega + (dt / 2) * k2w)
+    const k4d = dOmega + dt * k3w
+    const k4w = acc(t + dt, delta + dt * k3d, dOmega + dt * k3w)
+    delta += (dt / 6) * (k1d + 2 * k2d + 2 * k3d + k4d)
+    dOmega += (dt / 6) * (k1w + 2 * k2w + 2 * k3w + k4w)
+  }
+  return { samples, stable, lossOfSyncTime, maxDelta }
+}
+
+/** Tiempo crítico de despeje por bisección sobre el propio integrador. */
+export function criticalClearingTime(
+  Pm: number,
+  Eprime: number,
+  Vt: number,
+  Xd1: number,
+  H: number,
+  D: number,
+  f: number,
+): number | null {
+  const stableAt = (tc: number) =>
+    swingSimulation(Pm, Eprime, Vt, Xd1, H, D, f, tc, 4, 0.004).stable
+  let lo = 0.01
+  let hi = 1.2
+  if (!stableAt(lo)) return 0
+  if (stableAt(hi)) return null
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2
+    if (stableAt(mid)) lo = mid
+    else hi = mid
+  }
+  return (lo + hi) / 2
+}
