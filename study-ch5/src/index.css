@@ -136,3 +136,9 @@ input[type="range"]::-moz-range-thumb {
   --color-violet-300: #c4b5fd;
   --color-violet-400: #a78bfa;
 }
+
+/* En tema claro, el panel de instrumento debe ser SÓLIDO (las utilidades
+   con opacidad, p. ej. bg-zinc-950/60, se mezclarían con la página clara). */
+:root[data-theme="light"] .lab-panel {
+  background-color: #0b0b0d;
+}

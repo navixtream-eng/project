@@ -21,9 +21,21 @@ import C6Section1 from '../sections/C6Section1'
 import C6Section2 from '../sections/C6Section2'
 import C6Section3 from '../sections/C6Section3'
 import C6Section4 from '../sections/C6Section4'
+import C4Section1 from '../sections/C4Section1'
+import C4Section2 from '../sections/C4Section2'
+import C4Section3 from '../sections/C4Section3'
+
+type ChapterId = 4 | 5 | 6
+
+/** Acentos por capítulo: cian (fundamentos), esmeralda (régimen), rojo (transitorios) */
+const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: string; num: string; boxOn: string; lbl: string }> = {
+  4: { tab: 'text-sky-300', btnOn: 'border-sky-500/50 bg-sky-500/10', btnTxt: 'text-sky-300', box: 'border-sky-500/30', num: 'text-sky-400', boxOn: 'border-sky-500/40 bg-sky-500/5', lbl: 'text-sky-400/70' },
+  5: { tab: 'text-emerald-300', btnOn: 'border-emerald-500/50 bg-emerald-500/10', btnTxt: 'text-emerald-300', box: 'border-emerald-500/30', num: 'text-emerald-400', boxOn: 'border-emerald-500/40 bg-emerald-500/5', lbl: 'text-emerald-500/70' },
+  6: { tab: 'text-red-300', btnOn: 'border-red-500/50 bg-red-500/10', btnTxt: 'text-red-300', box: 'border-red-500/30', num: 'text-red-400', boxOn: 'border-red-500/40 bg-red-500/5', lbl: 'text-red-400/70' },
+}
 
 interface SectionDef {
-  chapter: 5 | 6
+  chapter: ChapterId
   num: number
   /** Prefijo de los ids de hitos de esta sección (ProgressContext) */
   prefix: string
@@ -35,6 +47,33 @@ interface SectionDef {
 }
 
 const SECTIONS: SectionDef[] = [
+  {
+    chapter: 4,
+    num: 1,
+    prefix: 'c4s1-',
+    short: 'Anatomía',
+    title: 'Anatomía: estator, rotor y entrehierro',
+    items: ['Las tres piezas y el escenario de aire', 'Campo vs. armadura', 'Problema 16: grados eléctricos y frecuencia'],
+    component: C4Section1,
+  },
+  {
+    chapter: 4,
+    num: 2,
+    prefix: 'c4s2-',
+    short: 'FMM distribuida',
+    title: 'FMM de devanados distribuidos',
+    items: ['La escalera que quiere ser seno (Fourier)', 'kd: el descuento del abanico', 'Problema 17: factor de distribución'],
+    component: C4Section2,
+  },
+  {
+    chapter: 4,
+    num: 3,
+    prefix: 'c4s3-',
+    short: 'Voltaje y par',
+    title: 'Voltaje generado, par y máquinas lineales',
+    items: ['E = 4.44·f·N·kw·Φ', 'T ∝ sen δ: imanes que se alinean', 'Saturación y dispersión', 'Problema 18: voltaje de fase y línea'],
+    component: C4Section3,
+  },
   {
     chapter: 5,
     num: 1,
@@ -127,7 +166,8 @@ const SECTIONS: SectionDef[] = [
   },
 ]
 
-const CHAPTERS: { id: 5 | 6; label: string; sub: string }[] = [
+const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
+  { id: 4, label: 'Capítulo 4', sub: 'Conceptos básicos' },
   { id: 5, label: 'Capítulo 5', sub: 'Régimen permanente' },
   { id: 6, label: 'Capítulo 6', sub: 'Régimen transitorio' },
 ]
@@ -188,7 +228,7 @@ export default function StudyShell() {
     const ids = ALL_CHECK_IDS.filter((id) => id.startsWith(def.prefix))
     return { done: ids.filter((id) => completed.has(id)).length, total: ids.length }
   }
-  const chapterProgress = (ch: 5 | 6) => {
+  const chapterProgress = (ch: ChapterId) => {
     const defs = SECTIONS.filter((s) => s.chapter === ch)
     return defs.reduce(
       (acc, d) => {
@@ -204,7 +244,7 @@ export default function StudyShell() {
   const chapterSections = SECTIONS.filter((s) => s.chapter === activeChapter)
   const ActiveSection = section.component
 
-  const goToChapter = (ch: 5 | 6) => {
+  const goToChapter = (ch: ChapterId) => {
     if (ch === activeChapter) return
     setActive(SECTIONS.findIndex((s) => s.chapter === ch))
   }
@@ -234,14 +274,10 @@ export default function StudyShell() {
                   type="button"
                   onClick={() => goToChapter(ch.id)}
                   className={`rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
-                    isActive
-                      ? ch.id === 5
-                        ? 'border-emerald-500/50 bg-emerald-500/10'
-                        : 'border-red-500/50 bg-red-500/10'
-                      : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-600'
+                    isActive ? ACC[ch.id].btnOn : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-600'
                   }`}
                 >
-                  <span className={`block text-[11px] font-black ${isActive ? (ch.id === 5 ? 'text-emerald-300' : 'text-red-300') : 'text-zinc-400'}`}>
+                  <span className={`block text-[11px] font-black ${isActive ? ACC[ch.id].btnTxt : 'text-zinc-400'}`}>
                     {ch.label}
                   </span>
                   <span className="block text-[9px] text-zinc-500">
@@ -290,7 +326,7 @@ export default function StudyShell() {
             const flatIndex = SECTIONS.indexOf(s)
             const isActive = flatIndex === active
             const complete = done === total
-            const accent = s.chapter === 5 ? 'text-emerald-300' : 'text-red-300'
+            const accent = ACC[s.chapter].tab
             return (
               <button
                 key={s.prefix}
@@ -332,9 +368,9 @@ export default function StudyShell() {
             <BookOpenText size={13} />
             En esta sección
           </p>
-          <div className={`rounded-xl border p-3 ${activeChapter === 5 ? 'border-emerald-500/30' : 'border-red-500/30'} bg-zinc-900/50`}>
+          <div className={`rounded-xl border p-3 ${ACC[activeChapter].box} bg-zinc-900/50`}>
             <p className="text-xs font-bold text-zinc-200">
-              <span className={`mr-1.5 ${activeChapter === 5 ? 'text-emerald-400' : 'text-red-400'}`}>
+              <span className={`mr-1.5 ${ACC[activeChapter].num}`}>
                 {activeChapter}.{section.num}
               </span>
               {section.title}
@@ -358,7 +394,7 @@ export default function StudyShell() {
               return (
                 <div key={s.prefix}>
                   {first && (
-                    <p className={`mb-1 mt-2 text-[9px] font-black uppercase tracking-widest ${s.chapter === 5 ? 'text-emerald-500/70' : 'text-red-400/70'}`}>
+                    <p className={`mb-1 mt-2 text-[9px] font-black uppercase tracking-widest ${ACC[s.chapter].lbl}`}>
                       Capítulo {s.chapter}
                     </p>
                   )}
@@ -367,11 +403,11 @@ export default function StudyShell() {
                     onClick={() => setActive(i)}
                     className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[11px] transition-colors ${
                       i === active
-                        ? `${s.chapter === 5 ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-red-500/40 bg-red-500/5'} text-zinc-200`
+                        ? `${ACC[s.chapter].boxOn} text-zinc-200`
                         : 'border-zinc-800 bg-zinc-900/40 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300'
                     }`}
                   >
-                    <span className={`font-bold ${s.chapter === 5 ? 'text-emerald-400' : 'text-red-400'}`}>{s.num}</span>
+                    <span className={`font-bold ${ACC[s.chapter].num}`}>{s.num}</span>
                     <span className="flex-1 truncate">{s.short}</span>
                     <span className={`font-mono text-[10px] ${done === total ? 'text-emerald-400' : 'text-zinc-600'}`}>
                       {done}/{total}
@@ -409,6 +445,7 @@ export default function StudyShell() {
                 revelan paso a paso con el <em>porqué</em> antes del <em>cómo</em>. Tu progreso (
                 <span className="font-mono text-emerald-300">{percent}%</span>) solo avanza cuando
                 superas predicciones y problemas. Arriba a la derecha eliges el capítulo:{' '}
+                <span className="text-sky-300">4 · Conceptos básicos</span>,{' '}
                 <span className="text-emerald-300">5 · Régimen permanente</span> o{' '}
                 <span className="text-red-300">6 · Régimen transitorio</span>.
               </p>
