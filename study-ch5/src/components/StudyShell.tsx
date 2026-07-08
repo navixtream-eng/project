@@ -4,6 +4,7 @@ import Section1 from '../sections/Section1'
 import Section2 from '../sections/Section2'
 import Section3 from '../sections/Section3'
 import Section4 from '../sections/Section4'
+import Section5 from '../sections/Section5'
 
 const TOC = [
   {
@@ -29,6 +30,12 @@ const TOC = [
     num: '4',
     title: 'Curvas de capacidad y motor sincrónico',
     items: ['La carta de operación P-Q', 'Motor: δ < 0, el campo arrastra', 'Problemas 6 y 7: carta y compensador'],
+  },
+  {
+    href: '#seccion-5',
+    num: '5',
+    title: 'Ensayos OCC/SCC y saturación',
+    items: ['La curva que se dobla y la recta que no', 'Xs saturada, no saturada y SCR', 'Problemas 8 y 9: parámetros del ensayo'],
   },
 ]
 
@@ -141,14 +148,16 @@ export default function StudyShell() {
           <Section3 />
           <div className="my-12 border-t border-zinc-800" />
           <Section4 />
+          <div className="my-12 border-t border-zinc-800" />
+          <Section5 />
 
           <footer className="mt-16 border-t border-zinc-800 pt-6 pb-10 text-center text-[11px] leading-relaxed text-zinc-600">
             Documento de estudio interactivo · Capítulo 5, <em>Máquinas Eléctricas</em> (Fitzgerald,
             Kingsley &amp; Umans) · Los valores numéricos de los problemas se calculan en vivo con el
             mismo motor de los laboratorios.
             <br />
-            Próximas entregas: ensayos de circuito abierto y cortocircuito (OCC/SCC), efectos de
-            saturación y pérdidas/rendimiento.
+            Con esto queda cubierto el núcleo del Capítulo 5. Posibles extensiones: pérdidas y
+            rendimiento, y el puente hacia los transitorios (simulador SyncLab).
           </footer>
         </main>
       </div>

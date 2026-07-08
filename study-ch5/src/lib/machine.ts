@@ -257,3 +257,79 @@ export function solveMotor(
 ): OperatingSolution {
   return solveFromIa(Vt, cx(-Pabs / Vt, -Qout / Vt), Xs)
 }
+
+// ---------------------------------------------------------------------------
+// Sección 5 — Ensayos OCC/SCC y saturación
+// ---------------------------------------------------------------------------
+
+export interface OccModel {
+  /** Pendiente de la línea de entrehierro [pu V / pu If] */
+  k: number
+  /** Tensión de techo de la saturación (forma del codo) [pu] */
+  Vm: number
+  /** Dureza del codo (mayor n = codo más abrupto) */
+  n: number
+}
+
+/** Máquina de referencia: OCC que pasa por 1.0 pu con If = 1.0 pu. */
+export const DEFAULT_OCC: OccModel = { k: 1.222, Vm: 1.3, n: 3 }
+
+/** Línea de entrehierro: respuesta si el hierro nunca saturara. */
+export const airGapVoltage = (If: number, m: OccModel): number => m.k * If
+
+/**
+ * Característica de circuito abierto (OCC): recorte suave de la línea de
+ * entrehierro. Lineal abajo (manda el entrehierro), doblada arriba (el
+ * hierro satura y cada amperio de campo rinde cada vez menos flujo).
+ */
+export const occVoltage = (If: number, m: OccModel): number => {
+  const v = m.k * If
+  return v / Math.pow(1 + Math.pow(v / m.Vm, m.n), 1 / m.n)
+}
+
+/**
+ * Característica de cortocircuito (SCC): recta, porque con los bornes en
+ * corto la reacción de armadura desmagnetiza casi todo el flujo y la
+ * máquina trabaja en el tramo lineal (no saturado) de su hierro.
+ */
+export const sccCurrent = (If: number, m: OccModel, XsUnsat: number): number =>
+  airGapVoltage(If, m) / XsUnsat
+
+/** AFNL: corriente de campo que produce tensión nominal (1.0 pu) en vacío. */
+export function findAfnl(m: OccModel): number {
+  let lo = 0.01
+  let hi = 10
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2
+    if (occVoltage(mid, m) < 1) lo = mid
+    else hi = mid
+  }
+  return (lo + hi) / 2
+}
+
+/** AFSC: corriente de campo que produce corriente nominal (1.0 pu) en corto. */
+export const findAfsc = (m: OccModel, XsUnsat: number): number => XsUnsat / m.k
+
+export interface TestResults {
+  afnl: number
+  afsc: number
+  /** Relación de cortocircuito SCR = AFNL/AFSC */
+  scr: number
+  /** Xs no saturada = Vag/Isc (a cualquier If, es constante) */
+  xsUnsat: number
+  /** Xs saturada (definición FKU): 1.0 pu / Isc(AFNL) */
+  xsSat: number
+}
+
+/** Parámetros que un ingeniero extrae del par de ensayos OCC + SCC. */
+export function extractTestResults(m: OccModel, XsUnsat: number): TestResults {
+  const afnl = findAfnl(m)
+  const afsc = findAfsc(m, XsUnsat)
+  return {
+    afnl,
+    afsc,
+    scr: afnl / afsc,
+    xsUnsat: XsUnsat,
+    xsSat: 1 / sccCurrent(afnl, m, XsUnsat),
+  }
+}
