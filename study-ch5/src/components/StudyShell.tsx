@@ -18,6 +18,7 @@ import Section6 from '../sections/Section6'
 import C6Section1 from '../sections/C6Section1'
 import C6Section2 from '../sections/C6Section2'
 import C6Section3 from '../sections/C6Section3'
+import C6Section4 from '../sections/C6Section4'
 
 interface SectionDef {
   chapter: 5 | 6
@@ -112,6 +113,15 @@ const SECTIONS: SectionDef[] = [
     title: 'Dinámica y estabilidad: E′ y la ecuación de oscilación',
     items: ['El modelo E′ tras X′d', 'La ecuación de oscilación y t_cr', 'El criterio de áreas iguales (A1 = A2)', 'Problema 14: presupuesto de las protecciones'],
     component: C6Section3,
+  },
+  {
+    chapter: 6,
+    num: 4,
+    prefix: 'c6s4-',
+    short: 'Curva y modelos',
+    title: 'Curva P-δ transitoria, circuitos del rotor y modelos',
+    items: ['Saliencia invertida: cresta > 90°', 'Escalera de reactancias y T′d0 = T′d·Xd/X′d', 'La escalera de modelos', 'Problema 15: la curva completa'],
+    component: C6Section4,
   },
 ]
 
