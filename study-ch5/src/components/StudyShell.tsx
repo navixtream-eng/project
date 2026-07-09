@@ -44,10 +44,15 @@ import C8Section2 from '../sections/C8Section2'
 import C8Section3 from '../sections/C8Section3'
 import C8Section4 from '../sections/C8Section4'
 import C8Section5 from '../sections/C8Section5'
+import C9Section1 from '../sections/C9Section1'
+import C9Section2 from '../sections/C9Section2'
+import C9Section3 from '../sections/C9Section3'
+import C9Section4 from '../sections/C9Section4'
+import C9Section5 from '../sections/C9Section5'
 
-export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
-/** Acentos por capítulo: violeta, ámbar, rosa, cian, esmeralda, rojo, teal (inducción), fucsia (control) */
+/** Acentos por capítulo: violeta, ámbar, rosa, cian, esmeralda, rojo, teal, fucsia, naranja (CC) */
 export const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: string; num: string; boxOn: string; lbl: string }> = {
   1: { tab: 'text-violet-300', btnOn: 'border-violet-500/50 bg-violet-500/10', btnTxt: 'text-violet-300', box: 'border-violet-500/30', num: 'text-violet-400', boxOn: 'border-violet-500/40 bg-violet-500/5', lbl: 'text-violet-400/70' },
   2: { tab: 'text-amber-300', btnOn: 'border-amber-500/50 bg-amber-500/10', btnTxt: 'text-amber-300', box: 'border-amber-500/30', num: 'text-amber-400', boxOn: 'border-amber-500/40 bg-amber-500/5', lbl: 'text-amber-400/70' },
@@ -57,6 +62,7 @@ export const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string
   6: { tab: 'text-red-300', btnOn: 'border-red-500/50 bg-red-500/10', btnTxt: 'text-red-300', box: 'border-red-500/30', num: 'text-red-400', boxOn: 'border-red-500/40 bg-red-500/5', lbl: 'text-red-400/70' },
   7: { tab: 'text-teal-300', btnOn: 'border-teal-500/50 bg-teal-500/10', btnTxt: 'text-teal-300', box: 'border-teal-500/30', num: 'text-teal-400', boxOn: 'border-teal-500/40 bg-teal-500/5', lbl: 'text-teal-400/70' },
   8: { tab: 'text-fuchsia-300', btnOn: 'border-fuchsia-500/50 bg-fuchsia-500/10', btnTxt: 'text-fuchsia-300', box: 'border-fuchsia-500/30', num: 'text-fuchsia-400', boxOn: 'border-fuchsia-500/40 bg-fuchsia-500/5', lbl: 'text-fuchsia-400/70' },
+  9: { tab: 'text-orange-300', btnOn: 'border-orange-500/50 bg-orange-500/10', btnTxt: 'text-orange-300', box: 'border-orange-500/30', num: 'text-orange-400', boxOn: 'border-orange-500/40 bg-orange-500/5', lbl: 'text-orange-400/70' },
 }
 
 export interface SectionDef {
@@ -351,6 +357,51 @@ export const SECTIONS: SectionDef[] = [
     items: ['6 IGBTs + bus de CD', 'PWM: el promedio es la señal', 'V₁ = m·Vdc/2', 'Problema 36: tensión de salida'],
     component: C8Section5,
   },
+  {
+    chapter: 9,
+    num: 1,
+    prefix: 'c9s1-',
+    short: 'Construcción',
+    title: 'Construcción y conmutación: rectificación mecánica',
+    items: ['Estator de campo + interpolos, rotor de armadura', 'El colector rectifica la CA interna', 'Más delgas → menos rizo', 'Problema 37: el rizo conmutado'],
+    component: C9Section1,
+  },
+  {
+    chapter: 9,
+    num: 2,
+    prefix: 'c9s2-',
+    short: 'Ecuaciones Ka',
+    title: 'Acoplamiento: Ka, Ea = KaΦω, T = KaΦIa',
+    items: ['Ka = P·Z/(2π·a) (geometría)', 'Ea y T comparten Ka·Φ', 'Ea·Ia = T·ω', 'Problema 38: FEM, par y potencia'],
+    component: C9Section2,
+  },
+  {
+    chapter: 9,
+    num: 3,
+    prefix: 'c9s3-',
+    short: 'Excitación',
+    title: 'Circuitos y excitación: shunt, serie, compuesta',
+    items: ['Vt = Ea ± Ia·Ra', 'Shunt: velocidad casi constante', 'Serie: T ∝ Ia² y embalamiento', 'Problema 39: shunt vs serie'],
+    component: C9Section3,
+  },
+  {
+    chapter: 9,
+    num: 4,
+    prefix: 'c9s4-',
+    short: 'Reacción armadura',
+    title: 'Reacción de armadura y limitaciones reales',
+    items: ['El flujo se ladea (FMM cruzada)', 'Neutro corrido + flujo debilitado', 'Interpolos y compensación', 'Problema 40: distorsión y corrección'],
+    component: C9Section4,
+  },
+  {
+    chapter: 9,
+    num: 5,
+    prefix: 'c9s5-',
+    short: 'Potencia y η',
+    title: 'Flujo de potencia, pérdidas y eficiencia',
+    items: ['Pin → Pdev = Ea·Ia → Peje', 'Cobre, núcleo, mecánicas, stray', 'η con forma de campana', 'Problema 41: balance y rendimiento'],
+    component: C9Section5,
+  },
 ]
 
 export const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
@@ -362,6 +413,7 @@ export const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
   { id: 6, label: 'Capítulo 6', sub: 'Régimen transitorio' },
   { id: 7, label: 'Capítulo 7', sub: 'Máquinas de inducción' },
   { id: 8, label: 'Capítulo 8', sub: 'Dinámica y control' },
+  { id: 9, label: 'Capítulo 9', sub: 'Máquinas de CC' },
 ]
 
 const ACTIVE_KEY = 'fku-ch5-active-section'
@@ -670,8 +722,9 @@ export default function StudyShell() {
                 <span className="text-sky-300">4 · Conceptos básicos</span>,{' '}
                 <span className="text-emerald-300">5 · Régimen permanente</span>,{' '}
                 <span className="text-red-300">6 · Régimen transitorio</span>,{' '}
-                <span className="text-teal-300">7 · Máquinas de inducción</span> o{' '}
-                <span className="text-fuchsia-300">8 · Dinámica y control</span>.
+                <span className="text-teal-300">7 · Máquinas de inducción</span>,{' '}
+                <span className="text-fuchsia-300">8 · Dinámica y control</span> o{' '}
+                <span className="text-orange-300">9 · Máquinas de CC</span>.
               </p>
             </div>
           )}

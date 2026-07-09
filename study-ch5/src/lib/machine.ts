@@ -1123,3 +1123,163 @@ export function triangleWave(t: number, fc: number): number {
   const x = ((t * fc) % 1 + 1) % 1
   return 4 * Math.abs(x - 0.5) - 1
 }
+
+// ---------------------------------------------------------------------------
+// Capítulo 9 — Máquinas de corriente continua (CC)
+// ---------------------------------------------------------------------------
+
+/** Constante de la armadura: Ka = P·Z / (2π·a). */
+export const dcKa = (P: number, Z: number, a: number): number => (P * Z) / (2 * Math.PI * a)
+
+/** FEM inducida: Ea = Ka·Φ·ωm [V]. */
+export const dcEmf = (Ka: number, phi: number, omega: number): number => Ka * phi * omega
+/** Par electromagnético: T = Ka·Φ·Ia [N·m]. */
+export const dcTorque = (Ka: number, phi: number, Ia: number): number => Ka * phi * Ia
+
+export interface DcParams {
+  /** Tensión de terminales [V] */
+  Vt: number
+  /** Resistencia de armadura [Ω] */
+  Ra: number
+  /** Resistencia del campo serie [Ω] */
+  Rs: number
+  /** Constante de máquina por flujo del campo shunt/independiente, KE = Ka·Φ [V·s/rad] */
+  KE: number
+  /** Pendiente del campo serie, ks = Ka·(dΦ/dIa) [(V·s/rad)/A] */
+  ks: number
+  /** Corriente de campo shunt [A] (para el balance de potencia) */
+  If: number
+  /** Pérdidas rotacionales: núcleo + fricción y ventilación [W] */
+  Prot: number
+  /** Fracción de pérdidas indeterminadas (stray load) sobre la potencia de entrada */
+  strayFrac: number
+}
+
+/** Motor de CC de tamaño medio (~10 kW) — parámetros típicos. */
+export const DEFAULT_DC: DcParams = {
+  Vt: 240,
+  Ra: 0.4,
+  Rs: 0.3,
+  KE: 1.7,
+  ks: 0.045,
+  If: 2,
+  Prot: 600,
+  strayFrac: 0.01,
+}
+
+export type DcConnection = 'shunt' | 'serie' | 'acumulativa' | 'diferencial'
+
+/** ¿La conexión pone el campo serie en el lazo de armadura? */
+const dcHasSeries = (c: DcConnection): boolean => c !== 'shunt'
+
+/** Producto Ka·Φ efectivo [V·s/rad] según la conexión y la corriente de armadura. */
+export function dcKphi(conn: DcConnection, p: DcParams, Ia: number): number {
+  if (conn === 'serie') return p.ks * Ia
+  if (conn === 'acumulativa') return p.KE + p.ks * Ia
+  if (conn === 'diferencial') return Math.max(0.02, p.KE - p.ks * Ia)
+  return p.KE
+}
+
+export interface DcPoint {
+  Ia: number
+  kPhi: number
+  Ea: number
+  /** Velocidad [rad/s] */
+  omega: number
+  /** Velocidad [r/min] */
+  rpm: number
+  /** Par [N·m] */
+  T: number
+}
+
+/** Punto de operación (motor) a una corriente de armadura dada. */
+export function dcOperatingByIa(conn: DcConnection, p: DcParams, Ia: number): DcPoint {
+  const R = p.Ra + (dcHasSeries(conn) ? p.Rs : 0)
+  const Ea = p.Vt - Ia * R
+  const kPhi = dcKphi(conn, p, Ia)
+  const omega = kPhi > 1e-3 ? Ea / kPhi : Infinity
+  const T = kPhi * Ia
+  return { Ia, kPhi, Ea, omega, rpm: (omega * 60) / (2 * Math.PI), T }
+}
+
+export interface DcPower {
+  Pin: number
+  PcuArm: number
+  Pfield: number
+  Pdev: number
+  Pcore: number
+  Pmech: number
+  Pstray: number
+  Pout: number
+  eff: number
+  Ea: number
+}
+
+/**
+ * Flujo de potencia (motor): Pin = Vt·(Ia+If); pérdidas de cobre en armadura y
+ * campo; potencia desarrollada Pdev = Ea·Ia; pérdidas rotacionales e
+ * indeterminadas; salida en el eje. `generator` invierte el balance.
+ */
+export function dcPowerFlow(
+  conn: DcConnection,
+  p: DcParams,
+  Ia: number,
+  generator = false,
+): DcPower {
+  const R = p.Ra + (dcHasSeries(conn) ? p.Rs : 0)
+  const Ea = p.Vt - (generator ? -1 : 1) * Ia * R // generador: Ea = Vt + Ia·R
+  const isShunt = conn === 'shunt' || conn === 'acumulativa' || conn === 'diferencial'
+  const Ifield = isShunt ? p.If : 0
+  const PcuArm = Ia * Ia * R
+  const Pfield = p.Vt * Ifield
+  const Pdev = Ea * Ia
+  const Pcore = p.Prot * 0.55
+  const Pmech = p.Prot * 0.45
+  const half = Pcore + Pmech
+  if (!generator) {
+    const Pin = p.Vt * (Ia + Ifield)
+    const Pstray = p.strayFrac * Pin
+    const Pout = Pdev - half - Pstray
+    return { Pin, PcuArm, Pfield, Pdev, Pcore, Pmech, Pstray, Pout, eff: Pin > 0 ? Pout / Pin : 0, Ea }
+  }
+  // Generador: entra potencia mecánica, sale eléctrica
+  const Pmecin = Pdev + half
+  const Pstray = p.strayFrac * Pmecin
+  const Pout = p.Vt * Ia - Pfield // potencia eléctrica útil en terminales
+  const Pin = Pmecin + Pstray
+  return { Pin, PcuArm, Pfield, Pdev, Pcore, Pmech, Pstray, Pout, eff: Pin > 0 ? Pout / Pin : 0, Ea }
+}
+
+/**
+ * Reacción de armadura: densidad de flujo bajo el arco polar. El campo
+ * principal (uniforme) se suma a la FMM de armadura (lineal, cruzada), lo que
+ * apila el flujo en una punta polar y lo vacía en la otra; la saturación
+ * recorta la punta apilada, dando una pérdida NETA de flujo. Devuelve la
+ * curva B(x) y el desplazamiento del eje neutro.
+ */
+export function armatureReaction(
+  IaRel: number, // 0..1 (corriente de armadura relativa)
+  compensated: boolean,
+  n = 41,
+): { xs: number[]; b: number[]; neutralShiftDeg: number; fluxLoss: number } {
+  const Bfield = 1.0
+  const Bsat = 1.35
+  const armPeak = compensated ? 0.05 : 0.9 * IaRel
+  const xs: number[] = []
+  const b: number[] = []
+  let fluxWith = 0
+  let fluxBase = 0
+  for (let i = 0; i < n; i++) {
+    const x = -1 + (2 * i) / (n - 1) // −1..1 a lo ancho del polo
+    xs.push(x)
+    const raw = Bfield + armPeak * x // FMM cruzada lineal
+    const bs = Math.min(Bsat, Math.max(0, raw)) // saturación recorta la punta
+    b.push(bs)
+    fluxWith += bs
+    fluxBase += Bfield
+  }
+  // El eje neutro se corre hacia donde el flujo se anula; aproximación por el pico de armadura
+  const neutralShiftDeg = compensated ? 0 : 30 * IaRel
+  const fluxLoss = Math.max(0, (fluxBase - fluxWith) / fluxBase)
+  return { xs, b, neutralShiftDeg, fluxLoss }
+}

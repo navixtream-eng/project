@@ -5,9 +5,15 @@
  * de física del documento (garantía de coherencia).
  */
 import {
+  DEFAULT_DC,
   DEFAULT_FOC,
   DEFAULT_INDUCTION,
   MU0,
+  dcEmf,
+  dcKa,
+  dcOperatingByIa,
+  dcPowerFlow,
+  dcTorque,
   focFlux,
   focTorque,
   fmt,
@@ -252,6 +258,41 @@ export const TEACHING_NOTES: Record<string, TeachingNote> = {
     discusion: '¿Qué se gana y se pierde subiendo la frecuencia de conmutación?',
     minutos: 50,
   },
+  'c9s1-': {
+    objetivos: ['Describir la geometría (campo, interpolos, armadura) y el colector', 'Explicar la conmutación como rectificación mecánica de la CA interna'],
+    errorComun: 'Creer que la máquina de CC genera CC por dentro; por dentro es alterna y el colector la rectifica.',
+    demo: 'Laboratorio del colector: con 1 delga la salida es un seno rectificado (rizo 100 %); sube las delgas y observa el rizo desplomarse.',
+    discusion: '¿Por qué se dice que la máquina de CC «rectifica» en vez de «generar» CC?',
+    minutos: 50,
+  },
+  'c9s2-': {
+    objetivos: ['Calcular Ka = P·Z/(2π·a)', 'Aplicar Ea = Ka·Φ·ω y T = Ka·Φ·Ia y la conservación Ea·Ia = T·ω'],
+    errorComun: 'Confundir Ka (geometría fija) con las variables de operación (ω, Ia) o con el flujo Φ.',
+    demo: 'Laboratorio de la constante: mueve Φ y observa crecer Ea y T a la vez; verifica Ea·Ia = T·ω.',
+    discusion: '¿Por qué el mismo factor Ka·Φ aparece en la ecuación de tensión y en la de par?',
+    minutos: 50,
+  },
+  'c9s3-': {
+    objetivos: ['Aplicar la malla Vt = Ea ± Ia·Ra y despejar la velocidad', 'Comparar shunt (velocidad plana), serie (T ∝ Ia², embalamiento) y compuesta'],
+    errorComun: 'No advertir que el motor serie se embala en vacío (Φ ∝ Ia → 0 ⇒ ω → ∞).',
+    demo: 'Laboratorio de conexiones: compara las curvas par-velocidad; descarga el motor serie y observa el embalamiento.',
+    discusion: '¿Por qué un motor serie nunca debe arrancar sin carga acoplada?',
+    minutos: 60,
+  },
+  'c9s4-': {
+    objetivos: ['Explicar la distorsión del flujo por la FMM de armadura', 'Justificar interpolos y devanados de compensación'],
+    errorComun: 'Suponer que la reacción de armadura no cambia el flujo neto; por saturación de la punta apilada, lo DEBILITA.',
+    demo: 'Laboratorio de reacción de armadura: sube Ia y observa ladearse el flujo y correrse el neutro; activa la compensación.',
+    discusion: '¿Por qué interpolos y compensación se conectan en serie con la armadura?',
+    minutos: 55,
+  },
+  'c9s5-': {
+    objetivos: ['Trazar el árbol de potencia Pin → Pdev = Ea·Ia → Peje', 'Clasificar pérdidas y localizar el rendimiento máximo'],
+    errorComun: 'Confundir la potencia desarrollada Ea·Ia con la potencia útil del eje (faltan las rotacionales).',
+    demo: 'Laboratorio de flujo de potencia: barre la carga y localiza el pico de rendimiento; alterna motor/generador.',
+    discusion: '¿Por qué el rendimiento tiene forma de campana con la carga?',
+    minutos: 50,
+  },
 }
 
 // ---------------------------------------------------------------------------
@@ -449,6 +490,46 @@ export const PROBLEM_TEMPLATES: ProblemTemplate[] = [
         params: { id, iq1 },
         statement: `Un accionamiento FOC (2 pares de polos, Lm = 0.040 H, Lr = 0.042 H) fija id = ${id} A. Halle (a) el flujo del rotor, (b) el par con iq = ${iq1} A y con iq = ${iq2} A, y (c) explique por qué el flujo no cambia al variar iq.`,
         answer: `λr = Lm·id = ${fmt(flux, 3)} Wb. T(iq=${iq1}) = ${fmt(T1, 2)} N·m; T(iq=${iq2}) = ${fmt(T2, 2)} N·m (doble iq → doble par). λr = Lm·id no contiene iq ⇒ ∂λr/∂iq = 0: el flujo es independiente del par.`,
+      }
+    },
+  },
+  {
+    id: 'c9-ka',
+    chapter: 9,
+    title: 'FEM, par y potencia de una máquina de CC',
+    generate() {
+      const P = pick([2, 4, 6])
+      const Z = rnd(200, 800, 20)
+      const a = pick([2, 4])
+      const phi = rnd(0.01, 0.03, 0.002)
+      const rpm = rnd(800, 1800, 50)
+      const Ia = rnd(20, 80, 5)
+      const Ka = dcKa(P, Z, a)
+      const omega = (rpm * 2 * Math.PI) / 60
+      const Ea = dcEmf(Ka, phi, omega)
+      const T = dcTorque(Ka, phi, Ia)
+      return {
+        params: { P, Z, a, phi, rpm, Ia },
+        statement: `Una máquina de CC de ${P} polos con Z = ${Z} conductores en a = ${a} caminos paralelos tiene Φ = ${phi} Wb/polo, gira a ${rpm} r/min y lleva Ia = ${Ia} A. Halle (a) Ka, (b) la FEM Ea, (c) el par T y (d) verifique Ea·Ia = T·ω.`,
+        answer: `Ka = P·Z/(2π·a) = ${fmt(Ka, 1)}. ω = ${fmt(omega, 1)} rad/s. Ea = Ka·Φ·ω = ${fmt(Ea, 0)} V. T = Ka·Φ·Ia = ${fmt(T, 1)} N·m. Ea·Ia = ${fmt((Ea * Ia) / 1000, 2)} kW = T·ω = ${fmt((T * omega) / 1000, 2)} kW ✓`,
+      }
+    },
+  },
+  {
+    id: 'c9-motor',
+    chapter: 9,
+    title: 'Motor de CC shunt: velocidad y rendimiento',
+    generate() {
+      const Vt = pick([120, 240])
+      const Ra = rnd(0.2, 0.6, 0.05)
+      const Ia = rnd(20, 60, 5)
+      const p = { ...DEFAULT_DC, Vt, Ra }
+      const op = dcOperatingByIa('shunt', p, Ia)
+      const r = dcPowerFlow('shunt', p, Ia, false)
+      return {
+        params: { Vt, Ra, Ia },
+        statement: `Un motor de CC shunt (Vt = ${Vt} V, Ra = ${fmt(Ra, 2)} Ω, Ka·Φ = ${p.KE} V·s/rad, If = ${p.If} A, pérdidas rotacionales ${p.Prot} W) trabaja con Ia = ${Ia} A. Halle (a) la FEM Ea y la velocidad, (b) la potencia desarrollada, (c) la potencia de salida y el rendimiento.`,
+        answer: `Ea = Vt − Ia·Ra = ${fmt(op.Ea, 0)} V; n = Ea/(Ka·Φ)·60/2π = ${fmt(op.rpm, 0)} r/min. Pdev = Ea·Ia = ${fmt(r.Pdev / 1000, 2)} kW. Pin = ${fmt(r.Pin / 1000, 2)} kW; Pout = ${fmt(r.Pout / 1000, 2)} kW; η = ${fmt(r.eff * 100, 1)} %.`,
       }
     },
   },
