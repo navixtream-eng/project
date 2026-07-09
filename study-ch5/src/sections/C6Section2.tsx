@@ -3,7 +3,16 @@ import FeynmanCheck from '../components/FeynmanCheck'
 import Formula, { InlineMath } from '../components/Formula'
 import SolvedProblem from '../components/SolvedProblem'
 import ShortCircuitLab from '../widgets/ShortCircuitLab'
-import { DEFAULT_TRANSIENT, fmt, scEnvelope, scLevels, scPhaseCurrent } from '../lib/machine'
+import FaultSystemLab from '../widgets/FaultSystemLab'
+import {
+  DEFAULT_TRANSIENT,
+  EJ10_1,
+  faultSolution,
+  fmt,
+  scEnvelope,
+  scLevels,
+  scPhaseCurrent,
+} from '../lib/machine'
 
 /**
  * Capítulo 6, Sección 2 — El cortocircuito trifásico súbito: los tres
@@ -32,6 +41,11 @@ export default function C6Section2() {
     const i = Math.abs(scPhaseCurrent(t, 0, E, p))
     if (i > peak) peak = i
   }
+
+  // Ejemplo 10-1: falla trifásica en la barra de alta emisora, doble circuito
+  const ej = EJ10_1
+  const fs = faultSolution(ej, 'emisora')
+  const xExt = ej.xTg + ej.xL / ej.nLines + ej.xTr
 
   return (
     <section id="c6-seccion-2" className="scroll-mt-20">
@@ -197,6 +211,141 @@ export default function C6Section2() {
         takeaway="El oscilograma de una falla se lee por capas: X″d/T″d (amortiguadores), X′d/T′d (campo), Xd (lo que queda), más el offset DC con Ta. Estos son exactamente los parámetros que alimentan al simulador SyncLab."
       />
 
+      <ConceptBlock
+        title="2.3 · De la máquina al SISTEMA: la red también alimenta la falla"
+        idea="En una red real la falla no la alimenta solo el generador: TODA fuente conectada vierte corriente al cortocircuito. Aquí hay dos — el generador (que decae por capas: X″d → X′d → Xd) y la barra infinita (una red tan grande que su tensión no se inmuta: aporta una corriente CONSTANTE, sin decaimiento). La corriente total de falla es la SUMA (superposición) de ambos aportes; cada uno se calcula reduciendo la red a la reactancia que lo separa de la falla."
+        analogy="Un incendio (la falla) alimentado por dos mangueras: una es un tanque que se vacía por etapas (el generador, con sus reactancias crecientes); la otra es la red municipal a presión constante (la barra infinita). Para saber el caudal total sumas las dos — y para dimensionar una válvula concreta miras solo el caudal que pasa POR ESA válvula, que puede ser una fracción del total."
+      >
+        <p className="mb-3">
+          El truco de siempre: <strong>reducir la red</strong> a lo esencial. Las dos líneas en
+          paralelo valen <InlineMath latex={`x_l/2 = ${fmt(ej.xL / 2, 2)}`} /> pu; con los dos
+          transformadores, la reactancia externa entre el generador y la barra infinita antes de la
+          falla es{' '}
+          <InlineMath
+            latex={`x_{ext} = x_{Tg} + \\tfrac{x_l}{2} + x_{Tr} = ${fmt(xExt, 2)}`}
+          />{' '}
+          pu. Con la carga previa se hallan las FEM internas <InlineMath latex="E''" /> y{' '}
+          <InlineMath latex="E'" /> (que se conservan en el instante de la falla), y luego se
+          superponen los dos aportes. Juega con el diagrama: cambia la ubicación de la falla y el
+          número de circuitos, y mira quién manda.
+        </p>
+        <Formula
+          latex="I''_{falla} = \underbrace{\frac{E''}{X''_d + x_{Tg}}}_{\text{generador}} \;+\; \underbrace{\frac{E_b}{x_{Tr} + x_l/2}}_{\text{barra infinita}}"
+          symbols={[
+            { sym: "E''", meaning: 'FEM subtransitoria interna, hallada de las condiciones PREVIAS a la falla (E″ = |Eb + j(x_ext+X″d)·I_carga|). Se conserva en el primer instante — el flujo del rotor no salta.' },
+            { sym: 'E_b', meaning: 'Tensión de la barra infinita: constante, 1.00 pu. La red es tan rígida que su aporte NO decae — es el mismo en el periodo subtransitorio, transitorio y permanente.' },
+            { sym: "X''_d + x_{Tg}", meaning: 'Reactancia del generador hasta la falla (máquina + su transformador). Crece a X′d+xTg y luego Xd+xTg conforme la máquina se rinde por capas.' },
+            { sym: 'x_{Tr} + x_l/2', meaning: 'Reactancia de la barra infinita hasta la falla: transformador receptor + las dos líneas en paralelo. Si la falla se acerca a la red (barra receptora), esto se reduce a xTr solo y el aporte se dispara.' },
+          ]}
+        />
+      </ConceptBlock>
+
+      <FaultSystemLab />
+
+      <FeynmanCheck
+        id="c6s2-check-sistema"
+        question="En el diagrama, mueve la falla de la barra EMISORA (junto al generador) a la barra RECEPTORA (junto a la red infinita). ¿Por qué la corriente de falla es MUCHO mayor en la barra receptora?"
+        options={[
+          {
+            label: 'Porque el generador está más lejos y su corriente crece con la distancia.',
+            feedback:
+              'Al revés en cuanto al generador: cuanto más lejos, MÁS reactancia en serie y menos aporta él. Lo que dispara la falla en la barra receptora es el OTRO aporte — el de la red infinita, que allí no tiene casi nada en medio.',
+          },
+          {
+            label: 'Porque en la barra receptora la red infinita queda separada de la falla solo por el transformador receptor (xTr): su aporte, Eb/xTr, se vuelve enorme.',
+            correct: true,
+            feedback:
+              'Exacto: la barra infinita es una fuente de reactancia ~0. Cuanto menos reactancia haya entre ella y la falla, mayor su aporte (Eb/x). En la barra receptora solo queda xTr = 0.10 → aporte ≈ 10 pu, frente a los 2.5 pu cuando debe atravesar las líneas. La severidad de una falla depende de QUÉ tan cerca esté de las fuentes rígidas del sistema — por eso los puntos junto a la red son los más exigentes para los interruptores.',
+          },
+          {
+            label: 'Porque cambia la tensión interna del generador según dónde caiga la falla.',
+            feedback:
+              'La E″ interna se fija con las condiciones PREVIAS a la falla — no depende de dónde caiga después. Lo que cambia con la ubicación son las REACTANCIAS hasta la falla, y por tanto cuánto aporta cada fuente.',
+          },
+        ]}
+      />
+
+      <FeynmanCheck
+        id="c6s2-check-interruptor"
+        question="La corriente TOTAL de la falla (transitoria) es I′falla ≈ 5.5 pu, pero el interruptor de cabecera de la línea fallada solo debe cortar ≈ 4.2 pu. ¿Por qué VE menos corriente que la falla total?"
+        options={[
+          {
+            label: 'Porque el interruptor ya empezó a abrirse y recorta parte de la corriente.',
+            feedback:
+              'No: buscamos la corriente que debe cortar JUSTO antes de abrir (su deber de interrupción). El motivo es puramente topológico — por dónde llega cada aporte a la falla.',
+          },
+          {
+            label: 'Porque parte del aporte de la red infinita llega a la falla por la PROPIA línea fallada, desde el extremo opuesto — y esa corriente no pasa por el interruptor de cabecera.',
+            correct: true,
+            feedback:
+              'Justo. La falla está al inicio de la línea 2. Por el interruptor de cabecera pasan el aporte del generador y el de la red que viene por la línea SANA (la 1). Pero la red también alimenta la falla por la línea 2 desde el otro extremo: esa mitad entra por el lado receptor, no por este interruptor. Un interruptor se dimensiona por la corriente que REALMENTE lo atraviesa, no por la falla total — y para despejar del todo hay que abrir también el interruptor del otro extremo.',
+          },
+          {
+            label: 'Porque a los 0.1 s la corriente ya cayó a su valor permanente Iss.',
+            feedback:
+              'A los 0.1 s el periodo es TRANSITORIO (X′d), no permanente: T′d = 1.8 s es mucho mayor que 0.1 s, así que E′ apenas ha decaído. La diferencia con la falla total no es temporal, es de CAMINO: qué corriente pasa físicamente por ese interruptor.',
+          },
+        ]}
+      />
+
+      <SolvedProblem
+        id="c6s2-problema-ejemplo101"
+        numero="14"
+        title="Ejemplo 10-1 — Falla trifásica en el sistema hidráulico–barra infinita"
+        statement={
+          <>
+            Central hidráulica (X″d = {fmt(ej.xd2, 2)}, X′d = {fmt(ej.xd1, 2)}, Xd = {fmt(ej.xd, 2)};
+            T′d = 1.8 s) → transformador x_T = {fmt(ej.xTg, 2)} → doble línea x_l = {fmt(ej.xL, 2)} c/u
+            → transformador x_T = {fmt(ej.xTr, 2)} → barra infinita E_b = {fmt(ej.Eb, 2)} (todo en pu
+            de los KVA del generador). Antes de la falla los generadores dan{' '}
+            <strong>{fmt(ej.P * 100, 0)}%</strong> de sus KVA con <strong>fp unidad</strong> en la
+            barra infinita. Se produce un cortocircuito trifásico franco a la salida de la barra de
+            alta, en uno de los dos circuitos. Halle: <strong>(a)</strong> la corriente eficaz en una
+            fase de la falla justo después, con las componentes de continua (del generador y de la
+            red) en su máximo; <strong>(b)</strong> la corriente que debe cortar el interruptor de
+            cabecera del circuito averiado, que abre a los 0.1 s (para entonces la continua y la
+            subtransitoria ya son despreciables).
+          </>
+        }
+        steps={[
+          {
+            title: 'Condiciones previas: corriente de carga y FEM internas',
+            why: 'Las FEM internas E″ y E′ se CONSERVAN en el instante de la falla (el flujo del rotor no salta). Para hallarlas partimos del estado previo: fp unidad en la barra infinita ⇒ la corriente va en fase con Eb.',
+            work: `I_{carga} = \\frac{P}{E_b} = ${fmt(fs.Iload, 2)}\\ \\text{pu} \\qquad x_{ext} = ${fmt(ej.xTg, 2)}+\\tfrac{${fmt(ej.xL, 2)}}{2}+${fmt(ej.xTr, 2)} = ${fmt(xExt, 2)}\\ \\text{pu}`,
+            note: 'Con las dos líneas en paralelo (0.60/2 = 0.30) y los dos transformadores, la reactancia externa gen↔barra infinita es 0.50 pu.',
+          },
+          {
+            title: 'Las FEM internas detrás de X″d y X′d',
+            why: 'Cada FEM es la tensión de la barra infinita más la caída por la reactancia externa MÁS la reactancia de máquina de ese periodo, con la corriente de carga previa.',
+            work: `E'' = |E_b + j(x_{ext}+X''_d)\\,I| = ${fmt(fs.Esub, 3)}\\ \\text{pu} \\qquad E' = ${fmt(fs.Etr, 3)}\\ \\text{pu}`,
+          },
+          {
+            title: '(a) Superponer los dos aportes subtransitorios',
+            why: 'La falla la alimentan el generador (por su transformador) y la barra infinita (por el transformador receptor y las dos líneas en paralelo). Cada aporte = su FEM ÷ su reactancia hasta la falla; se suman.',
+            work: `I''_{gen} = \\frac{${fmt(fs.Esub, 3)}}{${fmt(fs.xGenSub, 2)}} = ${fmt(fs.IgenSub, 2)} \\quad I_\\infty = \\frac{${fmt(ej.Eb, 2)}}{${fmt(fs.xInf, 2)}} = ${fmt(fs.Iinf, 2)} \\quad\\Rightarrow\\quad I''_{falla} = ${fmt(fs.IfSub, 2)}\\ \\text{pu}`,
+          },
+          {
+            title: '(a) Añadir el offset DC máximo → valor eficaz asimétrico',
+            why: 'Con la componente de continua en su máximo, la continua inicial vale √2·I_ac. El eficaz de la onda asimétrica es √(I_ac² + I_dc²) = √3·I_ac.',
+            work: `I_{ef,asim} = \\sqrt{3}\\;I''_{falla} = \\sqrt{3}\\times ${fmt(fs.IfSub, 2)} = ${fmt(fs.IfSubAsym, 1)}\\ \\text{pu}`,
+            note: 'Ese es el esfuerzo mecánico y térmico máximo del primer instante — el que fija el poder de cierre de los interruptores.',
+          },
+          {
+            title: '(b) A los 0.1 s: periodo transitorio, sin DC ni subtransitoria',
+            why: 'A los 0.1 s la continua y la subtransitoria ya murieron, pero T′d = 1.8 s ≫ 0.1 s, así que E′ apenas decae: usamos el periodo transitorio (X′d). El aporte de la red infinita es el mismo de siempre (no decae).',
+            work: `I'_{gen} = \\frac{${fmt(fs.Etr, 3)}}{${fmt(fs.xGenTr, 2)}} = ${fmt(fs.IgenTr, 2)} \\qquad I_\\infty = ${fmt(fs.Iinf, 2)}\\ \\text{pu (sin cambio)}`,
+          },
+          {
+            title: '(b) Sólo la corriente que ATRAVIESA el interruptor de cabecera',
+            why: 'La falla está al inicio de la línea 2. Por el interruptor de cabecera pasan el aporte del generador y el de la red que llega por la línea SANA (la 1). La otra mitad del aporte de la red entra por la propia línea 2 desde el extremo receptor: NO pasa por este interruptor.',
+            work: `I_{interruptor} = I'_{gen} + \\tfrac{1}{2}I_\\infty = ${fmt(fs.IgenTr, 2)} + ${fmt(fs.infHealthy, 2)} = ${fmt(fs.Ibreaker, 2)}\\ \\text{pu}`,
+            note: 'Para DESPEJAR la falla no basta este interruptor: hay que abrir también el del otro extremo de la línea 2 (protección de línea con disparo en ambos terminales).',
+          },
+        ]}
+        answer={`\\text{(a)}\\ I''_{falla} = ${fmt(fs.IfSub, 2)}\\ \\text{pu simétrica} \\;\\Rightarrow\\; ${fmt(fs.IfSubAsym, 1)}\\ \\text{pu asimétrica (offset máx)} \\qquad \\text{(b)}\\ I_{interruptor} \\approx ${fmt(fs.Ibreaker, 2)}\\ \\text{pu}`}
+        takeaway="En un sistema, la falla la alimentan TODAS las fuentes y sus aportes se SUPERPONEN: el generador (que decae por capas) y la barra infinita (constante). La reactancia hasta la falla decide cuánto aporta cada una. Y ojo: la corriente que corta un interruptor concreto puede ser menor que la falla total, porque parte llega por otros caminos — un interruptor se dimensiona por lo que lo atraviesa, no por la falla entera."
+      />
+
       <div className="my-8 rounded-xl border border-zinc-700 bg-zinc-900/70 p-4">
         <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
           Síntesis Feynman · C6 Sección 2
@@ -215,6 +364,14 @@ export default function C6Section2() {
           <li>
             Los amortiguadores tienen dos oficios: fabricar el periodo subtransitorio y amortiguar el
             vaivén mecánico del rotor. Ociosos en régimen, héroes en el transitorio.
+          </li>
+          <li>
+            En un SISTEMA la falla la alimentan todas las fuentes (generador que decae + barra
+            infinita constante): se <strong>superponen</strong>. La reactancia hasta la falla fija
+            cada aporte; un interruptor concreto corta solo la corriente que lo atraviesa —{' '}
+            <InlineMath latex="I_{falla}''\approx 6.0" /> pu simétrica, ≈{' '}
+            <InlineMath latex="10.4" /> pu asimétrica, pero el interruptor de cabecera solo ≈{' '}
+            <InlineMath latex="4.2" /> pu.
           </li>
         </ul>
       </div>

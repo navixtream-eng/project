@@ -484,6 +484,172 @@ export function scPhaseCurrent(
   return ac + dc
 }
 
+// --- Falla trifásica en un SISTEMA (Ejemplo 10-1 FKU) -----------------------
+
+/**
+ * Red del ejemplo 10-1: central hidroeléctrica → transformador → barras de
+ * alta → doble circuito de transmisión → transformador → barra infinita.
+ * Reactancias en pu sobre los KVA del generador; resistencias despreciadas.
+ */
+export interface FaultNetwork {
+  /** Reactancias del generador [pu] */
+  xd: number
+  xd1: number
+  xd2: number
+  /** Transformador del generador [pu] */
+  xTg: number
+  /** Reactancia de CADA circuito de línea [pu] */
+  xL: number
+  /** Transformador receptor [pu] */
+  xTr: number
+  /** Tensión de la barra infinita [pu] */
+  Eb: number
+  /** Carga previa a la falla [pu de los KVA del generador] */
+  P: number
+  /** Factor de potencia en la barra infinita */
+  pf: number
+  lagging: boolean
+  /** Circuitos de línea en servicio antes de la falla (1 o 2) */
+  nLines: number
+}
+
+export const EJ10_1: FaultNetwork = {
+  xd: 0.8,
+  xd1: 0.3,
+  xd2: 0.23,
+  xTg: 0.1,
+  xL: 0.6,
+  xTr: 0.1,
+  Eb: 1.0,
+  P: 0.8,
+  pf: 1.0,
+  lagging: true,
+  nLines: 2,
+}
+
+/** Dónde ocurre el cortocircuito trifásico franco. */
+export type FaultNode = 'emisora' | 'receptora' | 'bornes'
+
+export interface FaultResult {
+  /** Líneas en paralelo [pu] */
+  xLineEq: number
+  /** Reactancia externa gen↔barra infinita antes de la falla [pu] */
+  xExt: number
+  /** Corriente de carga previa [pu] */
+  Iload: number
+  /** FEM internas (magnitud) detrás de cada reactancia, conservadas en la falla */
+  Esub: number
+  Etr: number
+  Ess: number
+  /** Reactancia del generador HASTA la falla en cada periodo [pu] */
+  xGenSub: number
+  xGenTr: number
+  xGenSs: number
+  /** Reactancia de la barra infinita hasta la falla [pu] */
+  xInf: number
+  /** Aportes del generador a la falla [pu] */
+  IgenSub: number
+  IgenTr: number
+  IgenSs: number
+  /** Aporte de la barra infinita a la falla [pu] */
+  Iinf: number
+  /** Corriente simétrica total en la falla, por periodo [pu] */
+  IfSub: number
+  IfTr: number
+  IfSs: number
+  /** Corriente eficaz asimétrica subtransitoria con offset DC máximo [pu] */
+  IfSubAsym: number
+  /** Aporte de la barra infinita que pasa por las líneas SANAS [pu] */
+  infHealthy: number
+  /** Corriente por el interruptor de cabecera de la línea fallada (periodo transitorio) [pu] */
+  Ibreaker: number
+}
+
+/**
+ * Resuelve la falla trifásica del ejemplo 10-1 para un nodo de falla dado.
+ * Método: (1) hallar la corriente de carga previa y con ella las FEM internas
+ * E″, E′, E (que se conservan en el instante de la falla); (2) reducir la red
+ * a la reactancia del generador y la de la barra infinita HASTA la falla;
+ * (3) superponer ambos aportes. La barra infinita no tiene decaimiento
+ * subtransitorio/transitorio: su aporte es el mismo en los tres periodos.
+ */
+export function faultSolution(n: FaultNetwork, node: FaultNode = 'emisora'): FaultResult {
+  const xLineEq = n.xL / n.nLines
+  const xExt = n.xTg + xLineEq + n.xTr
+
+  // Corriente de carga previa (barra infinita como referencia)
+  const phi = Math.acos(Math.min(1, Math.max(-1, n.pf))) * (n.lagging ? 1 : -1)
+  const Iload = n.P / n.pf / n.Eb
+  const I = cis(Iload, -phi)
+
+  // FEM interna (magnitud) detrás de la reactancia de máquina xM
+  const internal = (xM: number) => abs(add(cx(n.Eb, 0), scale(mulJ(I), xExt + xM)))
+  const Esub = internal(n.xd2)
+  const Etr = internal(n.xd1)
+  const Ess = internal(n.xd)
+
+  // Reactancias HASTA la falla según su ubicación
+  let xGen: (xM: number) => number
+  let xInf: number
+  if (node === 'receptora') {
+    xGen = (xM) => xM + n.xTg + xLineEq
+    xInf = n.xTr
+  } else if (node === 'bornes') {
+    xGen = (xM) => xM
+    xInf = n.xTg + xLineEq + n.xTr
+  } else {
+    // 'emisora': barras de alta del lado del generador
+    xGen = (xM) => xM + n.xTg
+    xInf = n.xTr + xLineEq
+  }
+  const xGenSub = xGen(n.xd2)
+  const xGenTr = xGen(n.xd1)
+  const xGenSs = xGen(n.xd)
+
+  const IgenSub = Esub / xGenSub
+  const IgenTr = Etr / xGenTr
+  const IgenSs = Ess / xGenSs
+  const Iinf = n.Eb / xInf
+
+  const IfSub = IgenSub + Iinf
+  const IfTr = IgenTr + Iinf
+  const IfSs = IgenSs + Iinf
+
+  // Asimétrica con offset DC máximo en ambos aportes:
+  // Irms = √(Iac² + Idc²), con Idc = √2·Iac  ⇒  √3·Iac
+  const IfSubAsym = Math.sqrt(3) * IfSub
+
+  // Interruptor de cabecera de la línea fallada: ve el aporte del generador
+  // más el de la barra infinita que llega por las líneas SANAS (el aporte que
+  // entra por la propia línea fallada llega desde el otro extremo).
+  const infHealthy =
+    node === 'emisora' ? ((n.nLines - 1) / n.nLines) * Iinf : Iinf
+  const Ibreaker = IgenTr + infHealthy
+
+  return {
+    xLineEq,
+    xExt,
+    Iload,
+    Esub,
+    Etr,
+    Ess,
+    xGenSub,
+    xGenTr,
+    xGenSs,
+    xInf,
+    IgenSub,
+    IgenTr,
+    IgenSs,
+    Iinf,
+    IfSub,
+    IfTr,
+    IfSs,
+    IfSubAsym,
+    infHealthy,
+    Ibreaker,
+  }
+}
+
 // --- Ecuación de oscilación (modelo E' tras X'd contra barra infinita) -----
 
 export interface SwingSample {
