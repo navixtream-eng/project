@@ -49,10 +49,15 @@ import C9Section2 from '../sections/C9Section2'
 import C9Section3 from '../sections/C9Section3'
 import C9Section4 from '../sections/C9Section4'
 import C9Section5 from '../sections/C9Section5'
+import C10Section1 from '../sections/C10Section1'
+import C10Section2 from '../sections/C10Section2'
+import C10Section3 from '../sections/C10Section3'
+import C10Section4 from '../sections/C10Section4'
+import C10Section5 from '../sections/C10Section5'
 
-export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 
-/** Acentos por capítulo: violeta, ámbar, rosa, cian, esmeralda, rojo, teal, fucsia, naranja (CC) */
+/** Acentos por capítulo: …, naranja (CC), cian (dinámica CC) */
 export const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: string; num: string; boxOn: string; lbl: string }> = {
   1: { tab: 'text-violet-300', btnOn: 'border-violet-500/50 bg-violet-500/10', btnTxt: 'text-violet-300', box: 'border-violet-500/30', num: 'text-violet-400', boxOn: 'border-violet-500/40 bg-violet-500/5', lbl: 'text-violet-400/70' },
   2: { tab: 'text-amber-300', btnOn: 'border-amber-500/50 bg-amber-500/10', btnTxt: 'text-amber-300', box: 'border-amber-500/30', num: 'text-amber-400', boxOn: 'border-amber-500/40 bg-amber-500/5', lbl: 'text-amber-400/70' },
@@ -63,6 +68,7 @@ export const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string
   7: { tab: 'text-teal-300', btnOn: 'border-teal-500/50 bg-teal-500/10', btnTxt: 'text-teal-300', box: 'border-teal-500/30', num: 'text-teal-400', boxOn: 'border-teal-500/40 bg-teal-500/5', lbl: 'text-teal-400/70' },
   8: { tab: 'text-fuchsia-300', btnOn: 'border-fuchsia-500/50 bg-fuchsia-500/10', btnTxt: 'text-fuchsia-300', box: 'border-fuchsia-500/30', num: 'text-fuchsia-400', boxOn: 'border-fuchsia-500/40 bg-fuchsia-500/5', lbl: 'text-fuchsia-400/70' },
   9: { tab: 'text-orange-300', btnOn: 'border-orange-500/50 bg-orange-500/10', btnTxt: 'text-orange-300', box: 'border-orange-500/30', num: 'text-orange-400', boxOn: 'border-orange-500/40 bg-orange-500/5', lbl: 'text-orange-400/70' },
+  10: { tab: 'text-cyan-300', btnOn: 'border-cyan-500/50 bg-cyan-500/10', btnTxt: 'text-cyan-300', box: 'border-cyan-500/30', num: 'text-cyan-400', boxOn: 'border-cyan-500/40 bg-cyan-500/5', lbl: 'text-cyan-400/70' },
 }
 
 export interface SectionDef {
@@ -402,6 +408,51 @@ export const SECTIONS: SectionDef[] = [
     items: ['Pin → Pdev = Ea·Ia → Peje', 'Cobre, núcleo, mecánicas, stray', 'η con forma de campana', 'Problema 41: balance y rendimiento'],
     component: C9Section5,
   },
+  {
+    chapter: 10,
+    num: 1,
+    prefix: 'c10s1-',
+    short: 'ODE acopladas',
+    title: 'Modelado dinámico: las dos ecuaciones diferenciales',
+    items: ['va = Ra·ia + La·di/dt + ea', 'T − Tcarga = J·dω/dt + B·ω', 'Acoplamiento y pico de arranque', 'Problema 42: ODE y arranque'],
+    component: C10Section1,
+  },
+  {
+    chapter: 10,
+    num: 2,
+    prefix: 'c10s2-',
+    short: 'Constantes τ',
+    title: 'Constantes de tiempo eléctrica y mecánica',
+    items: ['τe = La/Ra (rápida)', 'τm = J·Ra/(KaΦ)² (lenta)', 'τm ≫ τe → control en cascada', 'Problema 43: las dos constantes'],
+    component: C10Section2,
+  },
+  {
+    chapter: 10,
+    num: 3,
+    prefix: 'c10s3-',
+    short: '2.º orden',
+    title: 'Función de transferencia y diagramas de bloques',
+    items: ['Ω(s)/Va(s) de 2.º orden', 'ωn y ζ; polos en el plano s', 'Sobre / crítico / subamortiguado', 'Problema 44: ωn, ζ y régimen'],
+    component: C10Section3,
+  },
+  {
+    chapter: 10,
+    num: 4,
+    prefix: 'c10s4-',
+    short: 'Arranque y corto',
+    title: 'Transitorios: arranque directo y cortocircuito',
+    items: ['Iarr = Vt/Ra (sin FEM)', 'Resistencia de arranque por pasos', 'Cortocircuito del generador', 'Problema 45: limitar el arranque'],
+    component: C10Section4,
+  },
+  {
+    chapter: 10,
+    num: 5,
+    prefix: 'c10s5-',
+    short: 'Drives (PI)',
+    title: 'Control dinámico de velocidad (drives)',
+    items: ['Lazo cerrado PI y error cero', 'Lazo interno de corriente (limita par)', 'Lazo externo de velocidad (rampa)', 'Problema 46: control en cascada'],
+    component: C10Section5,
+  },
 ]
 
 export const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
@@ -414,6 +465,7 @@ export const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
   { id: 7, label: 'Capítulo 7', sub: 'Máquinas de inducción' },
   { id: 8, label: 'Capítulo 8', sub: 'Dinámica y control' },
   { id: 9, label: 'Capítulo 9', sub: 'Máquinas de CC' },
+  { id: 10, label: 'Capítulo 10', sub: 'Dinámica de CC' },
 ]
 
 const ACTIVE_KEY = 'fku-ch5-active-section'
@@ -723,8 +775,9 @@ export default function StudyShell() {
                 <span className="text-emerald-300">5 · Régimen permanente</span>,{' '}
                 <span className="text-red-300">6 · Régimen transitorio</span>,{' '}
                 <span className="text-teal-300">7 · Máquinas de inducción</span>,{' '}
-                <span className="text-fuchsia-300">8 · Dinámica y control</span> o{' '}
-                <span className="text-orange-300">9 · Máquinas de CC</span>.
+                <span className="text-fuchsia-300">8 · Dinámica y control</span>,{' '}
+                <span className="text-orange-300">9 · Máquinas de CC</span> o{' '}
+                <span className="text-cyan-300">10 · Dinámica de CC</span>.
               </p>
             </div>
           )}

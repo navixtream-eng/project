@@ -1283,3 +1283,154 @@ export function armatureReaction(
   const fluxLoss = Math.max(0, (fluxBase - fluxWith) / fluxBase)
   return { xs, b, neutralShiftDeg, fluxLoss }
 }
+
+// ---------------------------------------------------------------------------
+// Capítulo 10 — Dinámica y transitorios en máquinas de CC
+// ---------------------------------------------------------------------------
+
+export interface DcDynamics {
+  /** Tensión de armadura [V] */
+  Vt: number
+  /** Resistencia de armadura [Ω] */
+  Ra: number
+  /** Inductancia de armadura [H] */
+  La: number
+  /** Constante de máquina Ka·Φ [V·s/rad = N·m/A] */
+  kPhi: number
+  /** Inercia del rotor+carga [kg·m²] */
+  J: number
+  /** Fricción viscosa [N·m·s/rad] */
+  B: number
+}
+
+export const DEFAULT_DCDYN: DcDynamics = {
+  Vt: 240,
+  Ra: 0.5,
+  La: 0.004,
+  kPhi: 1.2,
+  J: 0.15,
+  B: 0.03,
+}
+
+/** Constantes de tiempo eléctrica (La/Ra) y mecánica (J·Ra/(Ka·Φ)²). */
+export function dcTimeConstants(p: DcDynamics): { taue: number; taum: number } {
+  return { taue: p.La / p.Ra, taum: (p.J * p.Ra) / (p.kPhi * p.kPhi) }
+}
+
+/**
+ * Sistema de segundo orden Ω(s)/Va(s) = kΦ / [La·J·s² + (Ra·J+La·B)s + (Ra·B+kΦ²)].
+ * Devuelve la frecuencia natural, el amortiguamiento y el régimen.
+ */
+export function dcSecondOrder(p: DcDynamics): {
+  wn: number
+  zeta: number
+  regime: 'sobreamortiguado' | 'crítico' | 'subamortiguado'
+} {
+  const a = p.La * p.J
+  const b = p.Ra * p.J + p.La * p.B
+  const c = p.Ra * p.B + p.kPhi * p.kPhi
+  const wn = Math.sqrt(c / a)
+  const zeta = b / (2 * Math.sqrt(a * c))
+  const regime = zeta > 1.03 ? 'sobreamortiguado' : zeta < 0.97 ? 'subamortiguado' : 'crítico'
+  return { wn, zeta, regime }
+}
+
+export interface DcDynSample {
+  t: number
+  ia: number
+  omega: number
+  rpm: number
+  T: number
+}
+
+/**
+ * Integra las ODE acopladas de la máquina de CC con RK4:
+ *   La·dia/dt = va(t) − Ra·ia − kΦ·ω
+ *   J·dω/dt   = kΦ·ia − Tload(t) − B·ω
+ * va y Tload son funciones del tiempo (permiten escalones y rampas).
+ */
+export function dcDynSim(
+  p: DcDynamics,
+  va: (t: number) => number,
+  tload: (t: number) => number,
+  tEnd: number,
+  dt = 0.0002,
+  sampleEvery = 5,
+): DcDynSample[] {
+  const deriv = (t: number, ia: number, w: number): [number, number] => [
+    (va(t) - p.Ra * ia - p.kPhi * w) / p.La,
+    (p.kPhi * ia - tload(t) - p.B * w) / p.J,
+  ]
+  const out: DcDynSample[] = []
+  let ia = 0
+  let w = 0
+  const steps = Math.ceil(tEnd / dt)
+  for (let i = 0; i <= steps; i++) {
+    const t = i * dt
+    if (i % sampleEvery === 0) out.push({ t, ia, omega: w, rpm: (w * 60) / (2 * Math.PI), T: p.kPhi * ia })
+    const [k1a, k1w] = deriv(t, ia, w)
+    const [k2a, k2w] = deriv(t + dt / 2, ia + (k1a * dt) / 2, w + (k1w * dt) / 2)
+    const [k3a, k3w] = deriv(t + dt / 2, ia + (k2a * dt) / 2, w + (k2w * dt) / 2)
+    const [k4a, k4w] = deriv(t + dt, ia + k3a * dt, w + k3w * dt)
+    ia += (dt / 6) * (k1a + 2 * k2a + 2 * k3a + k4a)
+    w += (dt / 6) * (k1w + 2 * k2w + 2 * k3w + k4w)
+  }
+  return out
+}
+
+/** Corriente de arranque directo (rotor parado, Ea = 0): Iarr = Vt/Ra. */
+export const dcStartCurrent = (Vt: number, Ra: number): number => Vt / Ra
+
+/**
+ * Accionamiento con control en cascada: lazo externo de VELOCIDAD (PI) que
+ * fija la referencia de corriente (limitada a ±Imax), y lazo interno de
+ * CORRIENTE (PI) que fija la tensión (limitada a ±Vmax). Simula el
+ * seguimiento de una referencia de velocidad ante una perturbación de carga.
+ */
+export interface DcDriveSample {
+  t: number
+  wref: number
+  omega: number
+  rpm: number
+  ia: number
+  iaRef: number
+}
+
+export function dcDriveSim(
+  p: DcDynamics,
+  wref: (t: number) => number,
+  tload: (t: number) => number,
+  gains: { kpS: number; kiS: number; kpC: number; kiC: number; Imax: number; Vmax: number },
+  tEnd: number,
+  dt = 0.0002,
+  sampleEvery = 5,
+): DcDriveSample[] {
+  const out: DcDriveSample[] = []
+  let ia = 0
+  let w = 0
+  let intS = 0 // integral del lazo de velocidad
+  let intC = 0 // integral del lazo de corriente
+  const steps = Math.ceil(tEnd / dt)
+  const clamp = (x: number, lim: number) => Math.max(-lim, Math.min(lim, x))
+  for (let i = 0; i <= steps; i++) {
+    const t = i * dt
+    const wr = wref(t)
+    // Lazo externo: velocidad → referencia de corriente (con anti-windup por saturación)
+    const eS = wr - w
+    const iaRefRaw = gains.kpS * eS + gains.kiS * intS
+    const iaRef = clamp(iaRefRaw, gains.Imax)
+    if (Math.abs(iaRefRaw) < gains.Imax) intS += eS * dt
+    // Lazo interno: corriente → tensión
+    const eC = iaRef - ia
+    const vaRaw = gains.kpC * eC + gains.kiC * intC + p.kPhi * w // + término de desacople (FEM)
+    const va = clamp(vaRaw, gains.Vmax)
+    if (Math.abs(vaRaw) < gains.Vmax) intC += eC * dt
+    if (i % sampleEvery === 0) out.push({ t, wref: wr, omega: w, rpm: (w * 60) / (2 * Math.PI), ia, iaRef })
+    // Planta (Euler semi-implícito basta con dt pequeño)
+    const dia = (va - p.Ra * ia - p.kPhi * w) / p.La
+    const dw = (p.kPhi * ia - tload(t) - p.B * w) / p.J
+    ia += dia * dt
+    w += dw * dt
+  }
+  return out
+}

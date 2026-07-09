@@ -6,6 +6,7 @@
  */
 import {
   DEFAULT_DC,
+  DEFAULT_DCDYN,
   DEFAULT_FOC,
   DEFAULT_INDUCTION,
   MU0,
@@ -13,6 +14,9 @@ import {
   dcKa,
   dcOperatingByIa,
   dcPowerFlow,
+  dcSecondOrder,
+  dcStartCurrent,
+  dcTimeConstants,
   dcTorque,
   focFlux,
   focTorque,
@@ -293,6 +297,41 @@ export const TEACHING_NOTES: Record<string, TeachingNote> = {
     discusion: '¿Por qué el rendimiento tiene forma de campana con la carga?',
     minutos: 50,
   },
+  'c10s1-': {
+    objetivos: ['Escribir las dos ODE (eléctrica con La, mecánica con J)', 'Explicar el pico de corriente de arranque por ausencia de contra-FEM'],
+    errorComun: 'Ignorar La (válido en régimen) al analizar transitorios; y creer que el pico de arranque lo causa La en vez de la ausencia de FEM.',
+    demo: 'Laboratorio de arranque (dos ODE): aplica el escalón y observa la corriente picar (rápido) y la velocidad arrastrarse (lento).',
+    discusion: '¿Por qué el circuito equivalente del Cap. 9 no basta para el arranque?',
+    minutos: 55,
+  },
+  'c10s2-': {
+    objetivos: ['Calcular τe = La/Ra y τm = J·Ra/(KaΦ)²', 'Justificar el control en cascada por la separación τm ≫ τe'],
+    errorComun: 'Suponer que la velocidad responde tan rápido como la corriente; τm suele ser mucho mayor que τe.',
+    demo: 'Laboratorio de constantes de tiempo: sube La (mueve τe) y J (mueve τm) y observa los dos ritmos por separado.',
+    discusion: '¿Qué propiedad de la máquina permite anidar un lazo rápido dentro de uno lento?',
+    minutos: 50,
+  },
+  'c10s3-': {
+    objetivos: ['Obtener la función de transferencia Ω(s)/Va(s) de 2.º orden', 'Interpretar ωn, ζ y los regímenes de amortiguamiento'],
+    errorComun: 'No ver por qué el sistema es de 2.º orden (dos almacenes de energía: La e J) y puede oscilar.',
+    demo: 'Laboratorio de 2.º orden: baja Ra hacia ζ<1 y observa la velocidad sobrepasar y los polos volverse complejos.',
+    discusion: '¿Por qué ζ = 1 (crítico) es el objetivo de diseño de muchos controladores?',
+    minutos: 55,
+  },
+  'c10s4-': {
+    objetivos: ['Calcular la corriente de arranque directo Iarr = Vt/Ra y dimensionar la resistencia de arranque', 'Explicar el transitorio de cortocircuito de un generador'],
+    errorComun: 'Creer que el pico de corriente lo limita La; lo limita Ra, y su tamaño se debe a la ausencia de contra-FEM.',
+    demo: 'Laboratorio de arranque: sube la resistencia de arranque y observa el pico de corriente desplomarse.',
+    discusion: '¿Por qué las fuerzas mecánicas de un cortocircuito son máximas en los primeros milisegundos?',
+    minutos: 55,
+  },
+  'c10s5-': {
+    objetivos: ['Describir el control en cascada (lazo de corriente dentro de velocidad)', 'Explicar el papel del término integral y de la limitación de corriente'],
+    errorComun: 'Pensar que un solo lazo de velocidad basta; la cascada existe para limitar corriente/par y aprovechar τe ≪ τm.',
+    demo: 'Laboratorio de drive: durante la rampa la corriente se pega a Imax; ante una perturbación de carga, el integrador recupera la velocidad.',
+    discusion: '¿Por qué el término integral garantiza velocidad exacta pese a la carga?',
+    minutos: 55,
+  },
 }
 
 // ---------------------------------------------------------------------------
@@ -530,6 +569,41 @@ export const PROBLEM_TEMPLATES: ProblemTemplate[] = [
         params: { Vt, Ra, Ia },
         statement: `Un motor de CC shunt (Vt = ${Vt} V, Ra = ${fmt(Ra, 2)} Ω, Ka·Φ = ${p.KE} V·s/rad, If = ${p.If} A, pérdidas rotacionales ${p.Prot} W) trabaja con Ia = ${Ia} A. Halle (a) la FEM Ea y la velocidad, (b) la potencia desarrollada, (c) la potencia de salida y el rendimiento.`,
         answer: `Ea = Vt − Ia·Ra = ${fmt(op.Ea, 0)} V; n = Ea/(Ka·Φ)·60/2π = ${fmt(op.rpm, 0)} r/min. Pdev = Ea·Ia = ${fmt(r.Pdev / 1000, 2)} kW. Pin = ${fmt(r.Pin / 1000, 2)} kW; Pout = ${fmt(r.Pout / 1000, 2)} kW; η = ${fmt(r.eff * 100, 1)} %.`,
+      }
+    },
+  },
+  {
+    id: 'c10-taus',
+    chapter: 10,
+    title: 'Constantes de tiempo y corriente de arranque (CC)',
+    generate() {
+      const Vt = pick([120, 240])
+      const Ra = rnd(0.2, 0.8, 0.05)
+      const La = rnd(0.003, 0.02, 0.001)
+      const J = rnd(0.05, 0.3, 0.01)
+      const p = { ...DEFAULT_DCDYN, Vt, Ra, La, J }
+      const { taue, taum } = dcTimeConstants(p)
+      const Iarr = dcStartCurrent(Vt, Ra)
+      return {
+        params: { Vt, Ra, La, J },
+        statement: `Un motor de CC (Vt = ${Vt} V, Ra = ${fmt(Ra, 2)} Ω, La = ${fmt(La * 1000, 0)} mH, Ka·Φ = ${p.kPhi} V·s/rad, J = ${fmt(J, 2)} kg·m²). Halle (a) τe, (b) τm, (c) su relación y (d) la corriente de arranque directo.`,
+        answer: `τe = La/Ra = ${fmt(taue * 1000, 1)} ms. τm = J·Ra/(KaΦ)² = ${fmt(taum * 1000, 1)} ms. τm/τe = ${fmt(taum / taue, 1)} (≫1 ⇒ control en cascada). Iarr = Vt/Ra = ${fmt(Iarr, 0)} A.`,
+      }
+    },
+  },
+  {
+    id: 'c10-2orden',
+    chapter: 10,
+    title: 'Sistema de 2.º orden: ωn, ζ y régimen (CC)',
+    generate() {
+      const Ra = rnd(0.1, 0.8, 0.05)
+      const La = rnd(0.004, 0.025, 0.001)
+      const p = { ...DEFAULT_DCDYN, Ra, La }
+      const so = dcSecondOrder(p)
+      return {
+        params: { Ra, La },
+        statement: `Para un motor de CC (Ra = ${fmt(Ra, 2)} Ω, La = ${fmt(La * 1000, 0)} mH, Ka·Φ = ${p.kPhi} V·s/rad, J = ${p.J} kg·m², B = ${p.B}), halle (a) la frecuencia natural ωn, (b) el amortiguamiento ζ y (c) el régimen de la respuesta al escalón.`,
+        answer: `ωn = √[(Ra·B+(KaΦ)²)/(La·J)] = ${fmt(so.wn, 1)} rad/s. ζ = (Ra·J+La·B)/(2√(La·J·(Ra·B+(KaΦ)²))) = ${fmt(so.zeta, 2)}. Régimen: ${so.regime}.`,
       }
     },
   },
