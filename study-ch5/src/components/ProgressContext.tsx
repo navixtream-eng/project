@@ -137,6 +137,10 @@ interface ProgressState {
   markDone: (id: CheckId) => void
   reset: () => void
   percent: number
+  /** Serializa el progreso a JSON (para entregar al docente o respaldar). */
+  exportProgress: () => string
+  /** Carga un progreso desde JSON; devuelve cuántos hitos válidos importó, o null si el JSON es inválido. */
+  importProgress: (json: string) => number | null
 }
 
 const ProgressContext = createContext<ProgressState | null>(null)
@@ -172,14 +176,46 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
 
   const reset = useCallback(() => setCompleted(new Set()), [])
 
+  const exportProgress = useCallback(
+    () =>
+      JSON.stringify(
+        {
+          app: 'fku-maquinas-electricas',
+          version: 1,
+          total: ALL_CHECK_IDS.length,
+          completed: [...completed],
+        },
+        null,
+        2,
+      ),
+    [completed],
+  )
+
+  const importProgress = useCallback((json: string): number | null => {
+    try {
+      const parsed = JSON.parse(json)
+      const arr: unknown = Array.isArray(parsed) ? parsed : parsed?.completed
+      if (!Array.isArray(arr)) return null
+      const valid = arr.filter((id): id is CheckId =>
+        (ALL_CHECK_IDS as readonly string[]).includes(id as string),
+      )
+      setCompleted(new Set(valid))
+      return valid.length
+    } catch {
+      return null
+    }
+  }, [])
+
   const value = useMemo<ProgressState>(
     () => ({
       completed,
       markDone,
       reset,
       percent: Math.round((completed.size / ALL_CHECK_IDS.length) * 100),
+      exportProgress,
+      importProgress,
     }),
-    [completed, markDone, reset],
+    [completed, markDone, reset, exportProgress, importProgress],
   )
 
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>

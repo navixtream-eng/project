@@ -6,11 +6,13 @@ import {
   ChevronRight,
   GraduationCap,
   Moon,
+  Presentation,
   RotateCcw,
   Sun,
   Zap,
 } from 'lucide-react'
 import { ALL_CHECK_IDS, useProgress } from './ProgressContext'
+import TeacherHub from './TeacherHub'
 import Section1 from '../sections/Section1'
 import Section2 from '../sections/Section2'
 import Section3 from '../sections/Section3'
@@ -43,10 +45,10 @@ import C8Section3 from '../sections/C8Section3'
 import C8Section4 from '../sections/C8Section4'
 import C8Section5 from '../sections/C8Section5'
 
-type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 
 /** Acentos por capítulo: violeta, ámbar, rosa, cian, esmeralda, rojo, teal (inducción), fucsia (control) */
-const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: string; num: string; boxOn: string; lbl: string }> = {
+export const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: string; num: string; boxOn: string; lbl: string }> = {
   1: { tab: 'text-violet-300', btnOn: 'border-violet-500/50 bg-violet-500/10', btnTxt: 'text-violet-300', box: 'border-violet-500/30', num: 'text-violet-400', boxOn: 'border-violet-500/40 bg-violet-500/5', lbl: 'text-violet-400/70' },
   2: { tab: 'text-amber-300', btnOn: 'border-amber-500/50 bg-amber-500/10', btnTxt: 'text-amber-300', box: 'border-amber-500/30', num: 'text-amber-400', boxOn: 'border-amber-500/40 bg-amber-500/5', lbl: 'text-amber-400/70' },
   3: { tab: 'text-rose-300', btnOn: 'border-rose-500/50 bg-rose-500/10', btnTxt: 'text-rose-300', box: 'border-rose-500/30', num: 'text-rose-400', boxOn: 'border-rose-500/40 bg-rose-500/5', lbl: 'text-rose-400/70' },
@@ -57,7 +59,7 @@ const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: 
   8: { tab: 'text-fuchsia-300', btnOn: 'border-fuchsia-500/50 bg-fuchsia-500/10', btnTxt: 'text-fuchsia-300', box: 'border-fuchsia-500/30', num: 'text-fuchsia-400', boxOn: 'border-fuchsia-500/40 bg-fuchsia-500/5', lbl: 'text-fuchsia-400/70' },
 }
 
-interface SectionDef {
+export interface SectionDef {
   chapter: ChapterId
   num: number
   /** Prefijo de los ids de hitos de esta sección (ProgressContext) */
@@ -69,7 +71,7 @@ interface SectionDef {
   component: ComponentType
 }
 
-const SECTIONS: SectionDef[] = [
+export const SECTIONS: SectionDef[] = [
   {
     chapter: 1,
     num: 1,
@@ -351,7 +353,7 @@ const SECTIONS: SectionDef[] = [
   },
 ]
 
-const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
+export const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
   { id: 1, label: 'Capítulo 1', sub: 'Circuitos magnéticos' },
   { id: 2, label: 'Capítulo 2', sub: 'Transformadores' },
   { id: 3, label: 'Capítulo 3', sub: 'Conversión de energía' },
@@ -397,6 +399,7 @@ export default function StudyShell() {
   const [theme, setTheme] = useState<Theme>(loadTheme)
   const activeChapterBtnRef = useRef<HTMLButtonElement>(null)
   const activeTabBtnRef = useRef<HTMLButtonElement>(null)
+  const [teacherOpen, setTeacherOpen] = useState(false)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -449,6 +452,7 @@ export default function StudyShell() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <TeacherHub open={teacherOpen} onClose={() => setTeacherOpen(false)} />
       {/* Encabezado */}
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur">
         {/* Fila 1: marca + tema + progreso */}
@@ -480,6 +484,15 @@ export default function StudyShell() {
                 <RotateCcw size={14} />
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setTeacherOpen(true)}
+              title="Panel docente"
+              className="flex h-8 items-center gap-1.5 rounded-full border border-zinc-700 px-2.5 text-xs font-semibold text-zinc-400 transition-colors hover:border-fuchsia-500/50 hover:text-fuchsia-300"
+            >
+              <Presentation size={14} />
+              <span className="hidden sm:inline">Docente</span>
+            </button>
             <button
               type="button"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

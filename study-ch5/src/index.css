@@ -142,3 +142,40 @@ input[type="range"]::-moz-range-thumb {
 :root[data-theme="light"] .lab-panel {
   background-color: #0b0b0d;
 }
+
+/* ---- Impresión: hojas de problemas, mapa del curso y guía docente ---- */
+.tw-only-print { display: none; }
+@media print {
+  body { background: #fff; }
+  /* Ocultar todo salvo el área imprimible (visibility conserva el fondo oculto) */
+  body * { visibility: hidden !important; }
+  .tw-print, .tw-print * { visibility: visible !important; }
+  /* Desclipar los contenedores del modal para que el contenido fluya en varias páginas */
+  .tw-modal-overlay,
+  .tw-modal,
+  .tw-modal-body {
+    position: static !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    border: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  .tw-print {
+    position: static !important;
+    width: 100%;
+    padding: 4px 16px;
+  }
+  /* Normalizar a negro sobre blanco para papel */
+  .tw-print, .tw-print * {
+    color: #000 !important;
+    background: transparent !important;
+    border-color: #bbb !important;
+    box-shadow: none !important;
+  }
+  .tw-no-print { display: none !important; }
+  .tw-only-print { display: block !important; }
+  .break-inside-avoid { break-inside: avoid; }
+}
