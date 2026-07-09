@@ -40,10 +40,10 @@ export default defineConfig(() => {
               injectRegister: 'script',
               includeAssets: ['pwa-192.png', 'pwa-512.png'],
               manifest: {
-                name: 'Máquinas Sincrónicas — Documento de Estudio',
-                short_name: 'SyncStudy',
+                name: 'Máquinas Eléctricas — Documento de Estudio',
+                short_name: 'MáquinasFKU',
                 description:
-                  'Documento de estudio interactivo de máquinas sincrónicas (FKU Cap. 5 y 6): laboratorios, chequeos Feynman y problemas resueltos.',
+                  'Documento de estudio interactivo de máquinas eléctricas (FKU): 10 capítulos con laboratorios, chequeos Feynman y problemas resueltos.',
                 lang: 'es',
                 display: 'standalone',
                 background_color: '#09090b',

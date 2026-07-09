@@ -564,10 +564,10 @@ export default function StudyShell() {
           <GraduationCap size={24} className="shrink-0 text-emerald-400" />
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-sm font-black tracking-wide sm:text-base">
-              Máquinas Sincrónicas · Documento de Estudio
+              Máquinas Eléctricas · Documento de Estudio
             </h1>
             <p className="hidden truncate text-[11px] text-zinc-500 sm:block">
-              Interactivo · basado en Fitzgerald–Kingsley–Umans, <em>Máquinas Eléctricas</em>
+              Interactivo · basado en Fitzgerald–Kingsley–Umans, <em>Máquinas Eléctricas</em> · 10 capítulos
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -825,12 +825,13 @@ export default function StudyShell() {
           </div>
 
           <footer className="mt-10 border-t border-zinc-800 pt-6 pb-10 text-center text-[11px] leading-relaxed text-zinc-600">
-            Documento de estudio interactivo · Capítulos 5 (régimen permanente) y 6 (transitorios),{' '}
-            <em>Máquinas Eléctricas</em> (Fitzgerald, Kingsley &amp; Umans) · Los valores numéricos de
-            los problemas se calculan en vivo con el mismo motor de los laboratorios.
+            Documento de estudio interactivo · 10 capítulos, de los circuitos magnéticos al control de
+            accionamientos, basado en <em>Máquinas Eléctricas</em> (Fitzgerald, Kingsley &amp; Umans) ·
+            Los valores numéricos de los problemas se calculan en vivo con el mismo motor de los
+            laboratorios.
             <br />
-            El fenómeno transitorio completo — corrientes, fasores animados y criterio de áreas
-            iguales — vive en el simulador SyncLab de este mismo repositorio.
+            El fenómeno transitorio de la máquina sincrónica — corrientes, fasores animados y criterio de
+            áreas iguales — vive además en el simulador SyncLab de este mismo repositorio.
           </footer>
         </main>
       </div>
