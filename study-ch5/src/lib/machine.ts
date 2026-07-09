@@ -1028,3 +1028,98 @@ export function inductionMaxTorque(p: InductionParams): { Tmax: number; sMax: nu
 
 /** Par de arranque (s = 1). */
 export const inductionStartTorque = (p: InductionParams): number => inductionTorque(p, 1)
+
+// ---------------------------------------------------------------------------
+// Capítulo 8 — Dinámica y control de la máquina de inducción
+// ---------------------------------------------------------------------------
+
+/**
+ * Transformación de Park (abc → dq0) a un ángulo de marco θ dado.
+ * Convención amplitud-invariante (factor 2/3). Devuelve (d, q, 0).
+ */
+export function abcToDq(a: number, b: number, c: number, theta: number): { d: number; q: number; z: number } {
+  const k = 2 / 3
+  const d = k * (a * Math.cos(theta) + b * Math.cos(theta - (2 * Math.PI) / 3) + c * Math.cos(theta + (2 * Math.PI) / 3))
+  const q = -k * (a * Math.sin(theta) + b * Math.sin(theta - (2 * Math.PI) / 3) + c * Math.sin(theta + (2 * Math.PI) / 3))
+  const z = k * 0.5 * (a + b + c)
+  return { d, q, z }
+}
+
+/** Terna trifásica balanceada de amplitud Amp, frecuencia angular w, en el instante t. */
+export function threePhase(amp: number, w: number, t: number, phase = 0): [number, number, number] {
+  return [
+    amp * Math.cos(w * t + phase),
+    amp * Math.cos(w * t + phase - (2 * Math.PI) / 3),
+    amp * Math.cos(w * t + phase + (2 * Math.PI) / 3),
+  ]
+}
+
+// --- Control escalar V/f -----------------------------------------------------
+
+/**
+ * Perfil de tensión del control V/f: sube proporcional a la frecuencia hasta
+ * la nominal (flujo constante) y se satura en Vrated por encima (debilitamiento
+ * de campo). `boost` es un pequeño refuerzo a baja frecuencia para vencer R1.
+ */
+export function vfVoltage(f: number, fBase: number, Vrated: number, boost = 0): number {
+  if (f <= 0) return boost
+  if (f >= fBase) return Vrated
+  return boost + (Vrated - boost) * (f / fBase)
+}
+
+/**
+ * Parámetros del motor a una frecuencia de alimentación f distinta de la
+ * nominal: las reactancias escalan con f y la tensión la fija el perfil V/f.
+ * Permite reutilizar inductionTorque/inductionMaxTorque a cualquier frecuencia.
+ */
+export function inductionAtFreq(base: InductionParams, f: number, V: number): InductionParams {
+  const k = f / base.f
+  return { ...base, f, V, X1: base.X1 * k, X2: base.X2 * k, Xm: base.Xm * k }
+}
+
+/** Región de operación del V/f: par constante (f ≤ fBase) o debilitamiento de campo. */
+export const vfRegion = (f: number, fBase: number): 'par-constante' | 'debilitamiento' =>
+  f <= fBase ? 'par-constante' : 'debilitamiento'
+
+// --- Control vectorial (FOC) -------------------------------------------------
+
+export interface FocParams {
+  polePairs: number
+  /** Inductancia mutua [H] */
+  Lm: number
+  /** Inductancia del rotor [H] */
+  Lr: number
+  idRated: number
+  iqRated: number
+}
+
+export const DEFAULT_FOC: FocParams = {
+  polePairs: 2,
+  Lm: 0.04,
+  Lr: 0.042,
+  idRated: 5,
+  iqRated: 15,
+}
+
+/** Enlace de flujo del rotor en régimen (FOC): λr = Lm·id. */
+export const focFlux = (Lm: number, id: number): number => Lm * id
+
+/**
+ * Par en control por orientación de campo: T = (3/2)(p/2)(Lm/Lr)·λr·iq.
+ * Desacoplado: λr solo depende de id; a flujo fijo, T es lineal en iq.
+ */
+export function focTorque(p: FocParams, id: number, iq: number): number {
+  const lambdaR = focFlux(p.Lm, id)
+  return 1.5 * p.polePairs * (p.Lm / p.Lr) * lambdaR * iq
+}
+
+// --- Inversor y PWM ----------------------------------------------------------
+
+/** Amplitud del fundamental de una PWM senoidal (región lineal): m·Vdc/2. */
+export const pwmFundamental = (m: number, Vdc: number): number => m * (Vdc / 2)
+
+/** Onda portadora triangular normalizada [-1, 1] de frecuencia fc en el instante t. */
+export function triangleWave(t: number, fc: number): number {
+  const x = ((t * fc) % 1 + 1) % 1
+  return 4 * Math.abs(x - 0.5) - 1
+}

@@ -37,10 +37,15 @@ import C7Section3 from '../sections/C7Section3'
 import C7Section4 from '../sections/C7Section4'
 import C7Section5 from '../sections/C7Section5'
 import C7Section6 from '../sections/C7Section6'
+import C8Section1 from '../sections/C8Section1'
+import C8Section2 from '../sections/C8Section2'
+import C8Section3 from '../sections/C8Section3'
+import C8Section4 from '../sections/C8Section4'
+import C8Section5 from '../sections/C8Section5'
 
-type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7
+type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 
-/** Acentos por capítulo: violeta (magnetismo), ámbar (transformadores), rosa (conversión), cian (fundamentos), esmeralda (régimen), rojo (transitorios), teal (inducción) */
+/** Acentos por capítulo: violeta, ámbar, rosa, cian, esmeralda, rojo, teal (inducción), fucsia (control) */
 const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: string; num: string; boxOn: string; lbl: string }> = {
   1: { tab: 'text-violet-300', btnOn: 'border-violet-500/50 bg-violet-500/10', btnTxt: 'text-violet-300', box: 'border-violet-500/30', num: 'text-violet-400', boxOn: 'border-violet-500/40 bg-violet-500/5', lbl: 'text-violet-400/70' },
   2: { tab: 'text-amber-300', btnOn: 'border-amber-500/50 bg-amber-500/10', btnTxt: 'text-amber-300', box: 'border-amber-500/30', num: 'text-amber-400', boxOn: 'border-amber-500/40 bg-amber-500/5', lbl: 'text-amber-400/70' },
@@ -49,6 +54,7 @@ const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: 
   5: { tab: 'text-emerald-300', btnOn: 'border-emerald-500/50 bg-emerald-500/10', btnTxt: 'text-emerald-300', box: 'border-emerald-500/30', num: 'text-emerald-400', boxOn: 'border-emerald-500/40 bg-emerald-500/5', lbl: 'text-emerald-500/70' },
   6: { tab: 'text-red-300', btnOn: 'border-red-500/50 bg-red-500/10', btnTxt: 'text-red-300', box: 'border-red-500/30', num: 'text-red-400', boxOn: 'border-red-500/40 bg-red-500/5', lbl: 'text-red-400/70' },
   7: { tab: 'text-teal-300', btnOn: 'border-teal-500/50 bg-teal-500/10', btnTxt: 'text-teal-300', box: 'border-teal-500/30', num: 'text-teal-400', boxOn: 'border-teal-500/40 bg-teal-500/5', lbl: 'text-teal-400/70' },
+  8: { tab: 'text-fuchsia-300', btnOn: 'border-fuchsia-500/50 bg-fuchsia-500/10', btnTxt: 'text-fuchsia-300', box: 'border-fuchsia-500/30', num: 'text-fuchsia-400', boxOn: 'border-fuchsia-500/40 bg-fuchsia-500/5', lbl: 'text-fuchsia-400/70' },
 }
 
 interface SectionDef {
@@ -298,6 +304,51 @@ const SECTIONS: SectionDef[] = [
     items: ['El dilema de R₂', 'Barra profunda: R₂ que cambia sola', 'Rotor devanado: R externa', 'Problema 31: R₂ para Tmax en arranque'],
     component: C7Section6,
   },
+  {
+    chapter: 8,
+    num: 1,
+    prefix: 'c8s1-',
+    short: 'Modelo dinámico',
+    title: 'Modelado dinámico: v = Ri + dλ/dt e inductancias móviles',
+    items: ['Las ecuaciones diferenciales reales', 'Mutuas M·cos θ → no lineal', 'Problema 32: cuándo importa'],
+    component: C8Section1,
+  },
+  {
+    chapter: 8,
+    num: 2,
+    prefix: 'c8s2-',
+    short: 'Marcos d-q',
+    title: 'Teoría de marcos de referencia (d-q)',
+    items: ['Park: abc → d-q', 'Estacionario, rotor, síncrono', 'Síncrono: la CA se vuelve CD', 'Problema 33: proyectar a d-q'],
+    component: C8Section2,
+  },
+  {
+    chapter: 8,
+    num: 3,
+    prefix: 'c8s3-',
+    short: 'Control V/f',
+    title: 'Control escalar V/f: flujo constante',
+    items: ['V/f = cte conserva el flujo', 'Par constante vs debilitamiento', 'Problema 34: ajustar el variador'],
+    component: C8Section3,
+  },
+  {
+    chapter: 8,
+    num: 4,
+    prefix: 'c8s4-',
+    short: 'FOC vectorial',
+    title: 'Control vectorial (FOC): id → flujo, iq → par',
+    items: ['La envidia de la máquina de CD', 'Alinear el marco con el flujo', 'Desacoplo: dos perillas', 'Problema 35: desacoplar flujo y par'],
+    component: C8Section4,
+  },
+  {
+    chapter: 8,
+    num: 5,
+    prefix: 'c8s5-',
+    short: 'Inversor y PWM',
+    title: 'Inversores y PWM: fabricar V y f',
+    items: ['6 IGBTs + bus de CD', 'PWM: el promedio es la señal', 'V₁ = m·Vdc/2', 'Problema 36: tensión de salida'],
+    component: C8Section5,
+  },
 ]
 
 const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
@@ -308,6 +359,7 @@ const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
   { id: 5, label: 'Capítulo 5', sub: 'Régimen permanente' },
   { id: 6, label: 'Capítulo 6', sub: 'Régimen transitorio' },
   { id: 7, label: 'Capítulo 7', sub: 'Máquinas de inducción' },
+  { id: 8, label: 'Capítulo 8', sub: 'Dinámica y control' },
 ]
 
 const ACTIVE_KEY = 'fku-ch5-active-section'
@@ -588,8 +640,9 @@ export default function StudyShell() {
                 <span className="text-rose-300">3 · Conversión de energía</span>,{' '}
                 <span className="text-sky-300">4 · Conceptos básicos</span>,{' '}
                 <span className="text-emerald-300">5 · Régimen permanente</span>,{' '}
-                <span className="text-red-300">6 · Régimen transitorio</span> o{' '}
-                <span className="text-teal-300">7 · Máquinas de inducción</span>.
+                <span className="text-red-300">6 · Régimen transitorio</span>,{' '}
+                <span className="text-teal-300">7 · Máquinas de inducción</span> o{' '}
+                <span className="text-fuchsia-300">8 · Dinámica y control</span>.
               </p>
             </div>
           )}
