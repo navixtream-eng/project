@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { FlaskConical, Pause, Play } from 'lucide-react'
+import CoilRotorScene from './anatomy3d/CoilRotorScene'
 
 /** Paleta categórica validada (dataviz, modo oscuro): par azul/amarillo */
 const COLORS = {
   laf: '#3987e5', // enlace de flujo λaf ∝ Laf(θ)
   emf: '#c98500', // FEM inducida e = −dλaf/dt
   grid: '#27272a',
-  muted: '#71717a',
-  rotor: '#e66767',
-  coil: '#199e70',
 } as const
 
 /** Velocidad visual del rotor [Hz] (el real gira a f de red) */
@@ -27,76 +25,8 @@ function draw(canvas: HTMLCanvasElement, theta: number) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, w, h)
 
-  // --- Izquierda: rotor frente a la bobina de la fase a ---
-  const cx = Math.min(w * 0.22, 170)
-  const cy = h / 2
-  const R = Math.min(h * 0.34, 92)
-
-  // Estator: eje de la bobina de fase a (horizontal)
-  ctx.strokeStyle = COLORS.grid
-  ctx.setLineDash([4, 4])
-  ctx.beginPath()
-  ctx.moveTo(cx - R * 1.5, cy)
-  ctx.lineTo(cx + R * 1.5, cy)
-  ctx.stroke()
-  ctx.setLineDash([])
-  // Lados de la bobina a (arriba/abajo, plano perpendicular a su eje)
-  ctx.fillStyle = COLORS.coil
-  for (const s of [-1, 1]) {
-    ctx.beginPath()
-    ctx.arc(cx, cy + s * R * 1.18, 7, 0, 2 * Math.PI)
-    ctx.fill()
-  }
-  ctx.font = 'bold 12px ui-sans-serif'
-  ctx.fillText('bobina a', cx + 12, cy - R * 1.18 - 10)
-  ctx.fillStyle = COLORS.muted
-  ctx.font = '10px ui-sans-serif'
-  ctx.fillText('eje magnético de la fase a', cx + R * 0.42, cy - 6)
-
-  // Rotor: barra imantada girando (θme medido desde el eje de la fase a)
-  ctx.save()
-  ctx.translate(cx, cy)
-  ctx.rotate(-theta)
-  ctx.fillStyle = '#27272a'
-  ctx.strokeStyle = COLORS.rotor
-  ctx.lineWidth = 2.5
-  ctx.beginPath()
-  ctx.roundRect(-R * 0.92, -R * 0.3, R * 1.84, R * 0.6, 12)
-  ctx.fill()
-  ctx.stroke()
-  ctx.fillStyle = COLORS.rotor
-  ctx.font = 'bold 13px ui-sans-serif'
-  ctx.fillText('N', R * 0.68, 5)
-  ctx.fillStyle = '#3987e5'
-  ctx.fillText('S', -R * 0.8, 5)
-  // Flecha del eje del rotor
-  ctx.strokeStyle = COLORS.rotor
-  ctx.beginPath()
-  ctx.moveTo(0, 0)
-  ctx.lineTo(R * 1.28, 0)
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.moveTo(R * 1.28, 0)
-  ctx.lineTo(R * 1.12, -6)
-  ctx.lineTo(R * 1.12, 6)
-  ctx.closePath()
-  ctx.fill()
-  ctx.restore()
-
-  // Arco del ángulo θme
-  ctx.strokeStyle = COLORS.muted
-  ctx.setLineDash([3, 3])
-  ctx.beginPath()
-  ctx.arc(cx, cy, R * 0.55, 0, -theta, theta > 0)
-  ctx.stroke()
-  ctx.setLineDash([])
-  ctx.fillStyle = COLORS.muted
-  ctx.font = 'bold 12px ui-sans-serif'
-  const mid = -theta / 2
-  ctx.fillText('θme', cx + R * 0.7 * Math.cos(mid) - 10, cy + R * 0.7 * Math.sin(mid) + 4)
-
-  // --- Derecha: Laf(θ) = L·cos θ y e(θ) ∝ sen θ ---
-  const gx0 = cx + R * 1.75
+  // --- Laf(θ) = L·cos θ y e(θ) ∝ sen θ (el rotor 3D vive en un <canvas> aparte) ---
+  const gx0 = 16
   const gx1 = w - 16
   const gy = h / 2
   const amp = h * 0.3
@@ -197,7 +127,15 @@ export default function InductanceLab() {
           <span className="w-8 font-mono">{speed}×</span>
         </label>
       </div>
-      <canvas ref={canvasRef} className="h-56 w-full" />
+      <div className="flex flex-col sm:flex-row">
+        <div className="relative h-56 w-full shrink-0 touch-none sm:w-64">
+          <CoilRotorScene thetaRef={thetaRef} />
+          <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/40 px-1.5 py-0.5 text-[9px] text-zinc-400">
+            arrastra para rotar
+          </span>
+        </div>
+        <canvas ref={canvasRef} className="h-56 w-full" />
+      </div>
       <footer className="border-t border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-[11px] leading-relaxed text-zinc-400">
         <span className="font-semibold text-zinc-300">Observa: </span>
         el acople rotor-bobina es máximo cuando el polo N apunta al eje de la fase a (cos θ = 1) y nulo
