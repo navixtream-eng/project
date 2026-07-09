@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType } from 'react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
 import {
   BookOpenText,
   Check,
@@ -395,6 +395,8 @@ export default function StudyShell() {
   const { percent, completed, reset } = useProgress()
   const [active, setActive] = useState(loadActive)
   const [theme, setTheme] = useState<Theme>(loadTheme)
+  const activeChapterBtnRef = useRef<HTMLButtonElement>(null)
+  const activeTabBtnRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -412,6 +414,12 @@ export default function StudyShell() {
       /* almacenamiento no disponible: la pestaña simplemente no persiste */
     }
     window.scrollTo({ top: 0 })
+  }, [active])
+
+  // Mantener visibles el capítulo y la pestaña activos al navegar (revela los de la derecha)
+  useEffect(() => {
+    activeChapterBtnRef.current?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
+    activeTabBtnRef.current?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
   }, [active])
 
   const sectionProgress = (def: SectionDef) => {
@@ -443,59 +451,25 @@ export default function StudyShell() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       {/* Encabezado */}
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur">
+        {/* Fila 1: marca + tema + progreso */}
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 pt-3">
           <GraduationCap size={24} className="shrink-0 text-emerald-400" />
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-sm font-black tracking-wide sm:text-base">
               Máquinas Sincrónicas · Documento de Estudio
             </h1>
-            <p className="hidden text-[11px] text-zinc-500 sm:block">
+            <p className="hidden truncate text-[11px] text-zinc-500 sm:block">
               Interactivo · basado en Fitzgerald–Kingsley–Umans, <em>Máquinas Eléctricas</em>
             </p>
           </div>
-          {/* Selector de capítulo con progreso propio */}
-          <div className="flex gap-1.5">
-            {CHAPTERS.map((ch) => {
-              const p = chapterProgress(ch.id)
-              const isActive = ch.id === activeChapter
-              return (
-                <button
-                  key={ch.id}
-                  type="button"
-                  onClick={() => goToChapter(ch.id)}
-                  className={`rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
-                    isActive ? ACC[ch.id].btnOn : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-600'
-                  }`}
-                >
-                  <span className={`block text-[11px] font-black ${isActive ? ACC[ch.id].btnTxt : 'text-zinc-400'}`}>
-                    {ch.label}
-                  </span>
-                  <span className="block text-[9px] text-zinc-500">
-                    {ch.sub} · <span className="font-mono">{p.done}/{p.total}</span>
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-          <button
-            type="button"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            title={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-            aria-label={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-700 text-zinc-400 transition-colors hover:border-emerald-500/50 hover:text-emerald-400"
-          >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
-          <div className="hidden items-center gap-2 sm:flex">
-            <div className="h-2 w-24 overflow-hidden rounded-full bg-zinc-800">
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="hidden h-2 w-20 overflow-hidden rounded-full bg-zinc-800 sm:block">
               <div
                 className="h-full rounded-full bg-emerald-500 transition-all duration-500"
                 style={{ width: `${percent}%` }}
               />
             </div>
-            <span className="w-10 text-right font-mono text-xs font-bold text-emerald-300">
-              {percent}%
-            </span>
+            <span className="font-mono text-xs font-bold text-emerald-300">{percent}%</span>
             {completed.size > 0 && (
               <button
                 type="button"
@@ -506,7 +480,48 @@ export default function StudyShell() {
                 <RotateCcw size={14} />
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              title={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+              aria-label={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-zinc-400 transition-colors hover:border-emerald-500/50 hover:text-emerald-400"
+            >
+              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
           </div>
+        </div>
+
+        {/* Fila 2: selector de capítulo — fila propia y desplazable */}
+        <div className="relative">
+          <div className="mx-auto flex max-w-6xl gap-1.5 overflow-x-auto px-4 pt-2.5 pb-1 [scrollbar-width:thin]">
+            {CHAPTERS.map((ch) => {
+              const p = chapterProgress(ch.id)
+              const isActive = ch.id === activeChapter
+              return (
+                <button
+                  key={ch.id}
+                  ref={isActive ? activeChapterBtnRef : undefined}
+                  type="button"
+                  onClick={() => goToChapter(ch.id)}
+                  className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
+                    isActive ? ACC[ch.id].btnOn : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-600'
+                  }`}
+                >
+                  <span className={`flex items-center gap-1.5 text-[11px] font-black ${isActive ? ACC[ch.id].btnTxt : 'text-zinc-400'}`}>
+                    Cap. {ch.id}
+                    <span className={`font-mono text-[9px] ${p.done === p.total && p.total > 0 ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                      {p.done}/{p.total}
+                    </span>
+                  </span>
+                  <span className="block text-[9px] text-zinc-500">{ch.sub}</span>
+                </button>
+              )
+            })}
+          </div>
+          {/* Desvanecidos laterales que insinúan más capítulos */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-5 bg-gradient-to-r from-zinc-950 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-zinc-950 to-transparent" />
         </div>
 
         {/* Barra de pestañas del capítulo activo */}
@@ -520,6 +535,7 @@ export default function StudyShell() {
             return (
               <button
                 key={s.prefix}
+                ref={isActive ? activeTabBtnRef : undefined}
                 type="button"
                 onClick={() => setActive(flatIndex)}
                 className={`flex shrink-0 items-center gap-2 rounded-t-lg border-x border-t px-3 py-2 text-xs font-semibold transition-colors ${
