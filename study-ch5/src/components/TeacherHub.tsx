@@ -72,22 +72,30 @@ const wrapDoc = (title: string, body: string) =>
  * de impresión del navegador funciona aunque el Artifact esté en un iframe con
  * sandbox. Si las emergentes están bloqueadas, descarga el archivo.
  */
-function printDoc(html: string, filename: string) {
+function printDoc(html: string, filename: string): 'opened' | 'downloaded' {
   const bar =
     '<div class="printbar">Documento listo — <button onclick="window.print()">Imprimir / Guardar como PDF</button> o usa Ctrl/Cmd + P</div>' +
     '<script>window.addEventListener("load",function(){setTimeout(function(){try{window.focus();window.print()}catch(e){}},400)})</script>'
   const doc = html.replace('<body>', '<body>' + bar)
   const blob = new Blob([doc], { type: 'text/html' })
   const url = URL.createObjectURL(blob)
-  const w = window.open(url, '_blank')
-  if (!w) {
-    // Emergente bloqueada: descargar como respaldo garantizado
+  let win: Window | null = null
+  try {
+    win = window.open(url, '_blank')
+  } catch {
+    win = null
+  }
+  // Si la emergente está bloqueada (Artifact con sandbox), descargar el archivo.
+  if (!win || win.closed || typeof win.closed === 'undefined') {
     const a = document.createElement('a')
     a.href = url
     a.download = filename
     a.click()
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+    return 'downloaded'
   }
   window.setTimeout(() => URL.revokeObjectURL(url), 120000)
+  return 'opened'
 }
 
 function downloadDoc(html: string, filename: string) {
@@ -130,24 +138,38 @@ function buildGuideHtml(): string {
 
 /** Barra de impresión: abre el diálogo de impresión (→ Guardar como PDF) o descarga el HTML. */
 function PrintBar({ build, filename }: { build: () => string; filename: string }) {
+  const [msg, setMsg] = useState<string | null>(null)
   return (
-    <div className="tw-no-print flex shrink-0 items-center gap-1.5">
-      <button
-        type="button"
-        onClick={() => printDoc(build(), filename)}
-        title="Abre el documento en una pestaña nueva y lanza el diálogo de impresión (→ Guardar como PDF)"
-        className="flex items-center gap-1.5 rounded-lg border border-fuchsia-500/40 bg-fuchsia-500/10 px-3 py-1.5 text-xs font-semibold text-fuchsia-200 hover:bg-fuchsia-500/20"
-      >
-        <Printer size={13} /> Imprimir / PDF
-      </button>
-      <button
-        type="button"
-        onClick={() => downloadDoc(build(), filename)}
-        title="Descargar como HTML (ábrelo en tu navegador e imprime a PDF)"
-        className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-semibold text-zinc-300 hover:border-fuchsia-500/50"
-      >
-        <Download size={13} /> HTML
-      </button>
+    <div className="tw-no-print flex shrink-0 flex-col items-end gap-1">
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => {
+            const r = printDoc(build(), filename)
+            setMsg(
+              r === 'opened'
+                ? '✓ Abierto en pestaña nueva — imprime a PDF desde ahí.'
+                : '✓ Descargado (emergente bloqueada) — ábrelo e imprime con Ctrl/Cmd+P.',
+            )
+          }}
+          title="Abre el documento imprimible; si la ventana emergente está bloqueada, lo descarga."
+          className="flex items-center gap-1.5 rounded-lg bg-fuchsia-600 px-3 py-1.5 text-xs font-bold text-white shadow hover:bg-fuchsia-500"
+        >
+          <Printer size={13} /> Imprimir / PDF
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            downloadDoc(build(), filename)
+            setMsg('✓ Archivo descargado — ábrelo e imprime a PDF (Ctrl/Cmd+P).')
+          }}
+          title="Descargar como HTML (ábrelo en tu navegador e imprime a PDF)"
+          className="flex items-center gap-1.5 rounded-lg border border-zinc-600 bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-100 hover:border-fuchsia-500/60"
+        >
+          <Download size={13} /> HTML
+        </button>
+      </div>
+      {msg && <span className="max-w-[260px] text-right text-[10px] font-semibold text-emerald-500">{msg}</span>}
     </div>
   )
 }
