@@ -35,16 +35,122 @@ function secProgress(prefix: string, completed: Set<string>) {
   return { done: ids.filter((id) => completed.has(id)).length, total: ids.length }
 }
 
-/** Botón para imprimir el área marcada con .tw-print. */
-function PrintButton() {
+// ---- Impresión / PDF robusta: se construye un documento HTML autónomo y se
+//      imprime en un iframe propio (no depende del tema oscuro ni del sandbox
+//      del Artifact). Botón de descarga como respaldo si el diálogo se bloquea.
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+const PRINT_CSS = `
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111;margin:0;padding:22px;font-size:12px;line-height:1.5}
+  h1{font-size:18px;margin:0 0 2px}
+  .sub{color:#666;font-size:11px;margin:0 0 16px}
+  h2{font-size:13px;color:#a21caf;border-bottom:1px solid #ddd;padding-bottom:3px;margin:18px 0 8px}
+  .item{border:1px solid #cbd5e1;border-radius:6px;padding:9px 12px;margin:8px 0;page-break-inside:avoid;break-inside:avoid}
+  .tag{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#a21caf;font-weight:700;margin:0 0 4px}
+  .ttl{font-weight:700;margin:0 0 3px}
+  .ans{border:1px solid #86efac;background:#f0fdf4;border-radius:5px;padding:6px 8px;margin-top:8px;font-size:11px}
+  ul{margin:4px 0;padding-left:18px}li{margin:2px 0}
+  .meta{color:#888;font-size:10px}
+  .row{margin:2px 0}
+  .obj{color:#166534}.err{color:#b91c1c}.demo{color:#1d4ed8}.disc{color:#b45309}
+  @page{margin:14mm}
+`
+
+const wrapDoc = (title: string, body: string) =>
+  `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS}</style></head><body>${body}</body></html>`
+
+function printDoc(html: string) {
+  const iframe = document.createElement('iframe')
+  Object.assign(iframe.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0', opacity: '0' })
+  document.body.appendChild(iframe)
+  const win = iframe.contentWindow
+  const doc = win?.document
+  if (!win || !doc) {
+    iframe.remove()
+    return
+  }
+  doc.open()
+  doc.write(html)
+  doc.close()
+  const cleanup = () => {
+    try {
+      iframe.remove()
+    } catch {
+      /* ya removido */
+    }
+  }
+  win.onafterprint = cleanup
+  window.setTimeout(() => {
+    try {
+      win.focus()
+      win.print()
+    } catch {
+      cleanup()
+    }
+    window.setTimeout(cleanup, 60000)
+  }, 300)
+}
+
+function downloadDoc(html: string, filename: string) {
+  const blob = new Blob([html], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function buildMapHtml(): string {
+  let body = `<h1>Máquinas Eléctricas — Mapa del curso</h1><p class="sub">${SECTIONS.length} secciones · ${CHAPTERS.length} capítulos · basado en Fitzgerald-Kingsley-Umans</p>`
+  for (const ch of CHAPTERS) {
+    body += `<h2>Capítulo ${ch.id} · ${esc(ch.sub)}</h2>`
+    for (const s of SECTIONS.filter((x) => x.chapter === ch.id)) {
+      const note = TEACHING_NOTES[s.prefix]
+      body += `<div class="item"><p class="ttl">${ch.id}.${s.num} · ${esc(s.title)}</p>`
+      if (note) body += `<ul>${note.objetivos.map((o) => `<li>${esc(o)}</li>`).join('')}</ul>`
+      body += `<p class="meta">Temas: ${esc(s.items.join(' · '))}</p></div>`
+    }
+  }
+  return wrapDoc('Mapa del curso — Máquinas Eléctricas', body)
+}
+
+function buildGuideHtml(): string {
+  let body = `<h1>Máquinas Eléctricas — Guía docente</h1><p class="sub">Notas de clase por sección: objetivo, error común, qué demostrar y una pregunta de discusión</p>`
+  for (const s of SECTIONS) {
+    const n = TEACHING_NOTES[s.prefix]
+    if (!n) continue
+    body += `<div class="item"><p class="ttl">${s.chapter}.${s.num} · ${esc(s.title)} <span class="meta">(~${n.minutos} min)</span></p>`
+    body += `<p class="row"><b class="obj">Objetivos:</b> ${esc(n.objetivos.join('; '))}.</p>`
+    body += `<p class="row"><b class="err">Error común:</b> ${esc(n.errorComun)}</p>`
+    body += `<p class="row"><b class="demo">Demostrar:</b> ${esc(n.demo)}</p>`
+    body += `<p class="row"><b class="disc">Discusión:</b> ${esc(n.discusion)}</p></div>`
+  }
+  return wrapDoc('Guía docente — Máquinas Eléctricas', body)
+}
+
+/** Barra de impresión: abre el diálogo de impresión (→ Guardar como PDF) o descarga el HTML. */
+function PrintBar({ build, filename }: { build: () => string; filename: string }) {
   return (
-    <button
-      type="button"
-      onClick={() => window.print()}
-      className="tw-no-print flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:border-fuchsia-500/50 hover:text-fuchsia-300"
-    >
-      <Printer size={13} /> Imprimir / PDF
-    </button>
+    <div className="tw-no-print flex shrink-0 items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => printDoc(build())}
+        className="flex items-center gap-1.5 rounded-lg border border-fuchsia-500/40 bg-fuchsia-500/10 px-3 py-1.5 text-xs font-semibold text-fuchsia-200 hover:bg-fuchsia-500/20"
+      >
+        <Printer size={13} /> Imprimir / PDF
+      </button>
+      <button
+        type="button"
+        onClick={() => downloadDoc(build(), filename)}
+        title="Descargar como HTML (ábrelo en tu navegador e imprime a PDF)"
+        className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-semibold text-zinc-300 hover:border-fuchsia-500/50"
+      >
+        <Download size={13} /> HTML
+      </button>
+    </div>
   )
 }
 
@@ -104,6 +210,20 @@ export default function TeacherHub({ open, onClose }: { open: boolean; onClose: 
     setSheet(out)
   }
 
+  const buildWorksheetHtml = () => {
+    let n = 0
+    let body = `<h1>Hoja de problemas — Máquinas Eléctricas</h1><p class="sub">Nombre: ______________________&nbsp;&nbsp;&nbsp;Fecha: ____________&nbsp;&nbsp;&nbsp;Grupo: __________</p>`
+    for (const { template, problems } of sheet) {
+      for (const prob of problems) {
+        n += 1
+        body += `<div class="item"><p class="tag">${n}. ${esc(template.title)} (Cap. ${template.chapter})</p><p>${esc(prob.statement)}</p>`
+        if (withAnswers) body += `<div class="ans"><b>Clave:</b> ${esc(prob.answer)}</div>`
+        body += `</div>`
+      }
+    }
+    return wrapDoc('Hoja de problemas — Máquinas Eléctricas', body)
+  }
+
   let counter = 0
 
   return (
@@ -158,7 +278,7 @@ export default function TeacherHub({ open, onClose }: { open: boolean; onClose: 
                   Alinea el documento a tu sílabo: {SECTIONS.length} secciones en {CHAPTERS.length}{' '}
                   capítulos, con objetivos de aprendizaje.
                 </p>
-                <PrintButton />
+                <PrintBar build={buildMapHtml} filename="mapa-curso.html" />
               </div>
               <div className="tw-print space-y-5">
                 <h1 className="hidden text-lg font-black tw-only-print">
@@ -205,7 +325,7 @@ export default function TeacherHub({ open, onClose }: { open: boolean; onClose: 
                   Notas de clase por sección: objetivo, error común, qué demostrar y una pregunta de
                   discusión.
                 </p>
-                <PrintButton />
+                <PrintBar build={buildGuideHtml} filename="guia-docente.html" />
               </div>
               <div className="tw-print space-y-4">
                 <h1 className="hidden text-lg font-black tw-only-print">
@@ -302,7 +422,7 @@ export default function TeacherHub({ open, onClose }: { open: boolean; onClose: 
                   >
                     <RefreshCw size={13} /> {sheet.length ? 'Regenerar' : 'Generar hoja'}
                   </button>
-                  {sheet.length > 0 && <PrintButton />}
+                  {sheet.length > 0 && <PrintBar build={buildWorksheetHtml} filename="hoja-problemas.html" />}
                 </div>
               </div>
 
