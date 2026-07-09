@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { FlaskConical } from 'lucide-react'
-
-/** Paleta validada: primario azul, secundario amarillo, núcleo/flujo */
-const COLORS = { core: '#27272a', edge: '#52525b', p: '#3987e5', s: '#c98500', flux: '#199e70' }
+import TransformerScene from './anatomy3d/TransformerScene'
 
 function Readout({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
@@ -74,35 +72,15 @@ export default function IdealTransformerLab() {
       </div>
 
       <div className="flex flex-col items-center gap-2 sm:flex-row">
-        <svg viewBox="0 0 360 220" className="w-full max-w-md shrink-0 select-none">
-          {/* Núcleo */}
-          <path d="M 120 25 H 240 V 195 H 120 Z M 155 60 H 205 V 160 H 155 Z"
-            fill={COLORS.core} stroke={COLORS.edge} strokeWidth={1.5} fillRule="evenodd" />
-          {/* Flujo compartido */}
-          <path d="M 137 42 H 222 V 178 H 137 Z" fill="none" stroke={COLORS.flux}
-            strokeWidth={2.5} strokeDasharray="6 4" opacity={0.8} />
-          <text x={165} y={38} fill={COLORS.flux} fontSize={11} fontWeight={700}>φ compartido</text>
-          {/* Devanado primario */}
-          {Array.from({ length: turns1 }, (_, k) => (
-            <rect key={`p${k}`} x={106} y={62 + (k * 96) / turns1} width={30} height={Math.max(4, 80 / turns1)}
-              rx={3} fill={COLORS.p} opacity={0.9} />
-          ))}
-          <text x={60} y={115} fill={COLORS.p} fontSize={12} fontWeight={700}>V₁, N₁</text>
-          {/* Devanado secundario */}
-          {Array.from({ length: turns2 }, (_, k) => (
-            <rect key={`s${k}`} x={224} y={62 + (k * 96) / turns2} width={30} height={Math.max(4, 80 / turns2)}
-              rx={3} fill={COLORS.s} opacity={0.9} />
-          ))}
-          <text x={264} y={115} fill={COLORS.s} fontSize={12} fontWeight={700}>V₂, N₂</text>
-          {/* Carga */}
-          <line x1={254} y1={70} x2={318} y2={70} stroke={COLORS.edge} strokeWidth={1.5} />
-          <line x1={254} y1={150} x2={318} y2={150} stroke={COLORS.edge} strokeWidth={1.5} />
-          <rect x={306} y={82} width={24} height={56} rx={4} fill="none" stroke="#10b981" strokeWidth={2} />
-          <text x={300} y={177} fill="#10b981" fontSize={11} fontWeight={700}>Z carga</text>
-          <text x={124} y={212} fill="#71717a" fontSize={10}>
+        <div className="relative h-72 w-full max-w-md shrink-0 touch-none sm:h-80">
+          <TransformerScene turns1={turns1} turns2={turns2} />
+          <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/40 px-1.5 py-0.5 text-[9px] text-zinc-400">
+            arrastra para rotar · <span className="text-sky-300">V₁,N₁</span> · φ compartido (verde) · <span className="text-amber-300">V₂,N₂</span> → Z
+          </span>
+          <span className="pointer-events-none absolute bottom-2 left-2 rounded bg-black/40 px-1.5 py-0.5 text-[9px] text-zinc-500">
             ideal: μ→∞, R = 0, sin dispersión
-          </text>
-        </svg>
+          </span>
+        </div>
 
         <div className="grid flex-1 grid-cols-2 gap-2 p-3 lg:grid-cols-3">
           <Readout label="a = N₁/N₂" value={a.toFixed(2)} accent="text-emerald-300" />
