@@ -36,8 +36,10 @@ function secProgress(prefix: string, completed: Set<string>) {
 }
 
 // ---- Impresión / PDF robusta: se construye un documento HTML autónomo y se
-//      imprime en un iframe propio (no depende del tema oscuro ni del sandbox
-//      del Artifact). Botón de descarga como respaldo si el diálogo se bloquea.
+//      abre en una PESTAÑA NUEVA (contexto de nivel superior donde la impresión
+//      del navegador sí funciona, a diferencia del iframe con sandbox del
+//      Artifact). Botón de descarga como respaldo si las ventanas emergentes
+//      están bloqueadas.
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -55,42 +57,37 @@ const PRINT_CSS = `
   .meta{color:#888;font-size:10px}
   .row{margin:2px 0}
   .obj{color:#166534}.err{color:#b91c1c}.demo{color:#1d4ed8}.disc{color:#b45309}
+  .printbar{position:sticky;top:0;z-index:9;display:flex;gap:10px;align-items:center;justify-content:center;background:#fde68a;color:#111;padding:9px 14px;border-radius:8px;font-weight:600;margin:-8px 0 16px}
+  .printbar button{cursor:pointer;border:0;border-radius:6px;background:#7c3aed;color:#fff;font:600 12px system-ui;padding:6px 12px}
   @page{margin:14mm}
+  @media print{.printbar{display:none}}
 `
 
 const wrapDoc = (title: string, body: string) =>
   `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS}</style></head><body>${body}</body></html>`
 
-function printDoc(html: string) {
-  const iframe = document.createElement('iframe')
-  Object.assign(iframe.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0', opacity: '0' })
-  document.body.appendChild(iframe)
-  const win = iframe.contentWindow
-  const doc = win?.document
-  if (!win || !doc) {
-    iframe.remove()
-    return
+/**
+ * Abre el documento en una pestaña nueva con una barra «Imprimir / PDF» y un
+ * intento de impresión automática. En una pestaña de nivel superior el diálogo
+ * de impresión del navegador funciona aunque el Artifact esté en un iframe con
+ * sandbox. Si las emergentes están bloqueadas, descarga el archivo.
+ */
+function printDoc(html: string, filename: string) {
+  const bar =
+    '<div class="printbar">Documento listo — <button onclick="window.print()">Imprimir / Guardar como PDF</button> o usa Ctrl/Cmd + P</div>' +
+    '<script>window.addEventListener("load",function(){setTimeout(function(){try{window.focus();window.print()}catch(e){}},400)})</script>'
+  const doc = html.replace('<body>', '<body>' + bar)
+  const blob = new Blob([doc], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const w = window.open(url, '_blank')
+  if (!w) {
+    // Emergente bloqueada: descargar como respaldo garantizado
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
   }
-  doc.open()
-  doc.write(html)
-  doc.close()
-  const cleanup = () => {
-    try {
-      iframe.remove()
-    } catch {
-      /* ya removido */
-    }
-  }
-  win.onafterprint = cleanup
-  window.setTimeout(() => {
-    try {
-      win.focus()
-      win.print()
-    } catch {
-      cleanup()
-    }
-    window.setTimeout(cleanup, 60000)
-  }, 300)
+  window.setTimeout(() => URL.revokeObjectURL(url), 120000)
 }
 
 function downloadDoc(html: string, filename: string) {
@@ -137,7 +134,8 @@ function PrintBar({ build, filename }: { build: () => string; filename: string }
     <div className="tw-no-print flex shrink-0 items-center gap-1.5">
       <button
         type="button"
-        onClick={() => printDoc(build())}
+        onClick={() => printDoc(build(), filename)}
+        title="Abre el documento en una pestaña nueva y lanza el diálogo de impresión (→ Guardar como PDF)"
         className="flex items-center gap-1.5 rounded-lg border border-fuchsia-500/40 bg-fuchsia-500/10 px-3 py-1.5 text-xs font-semibold text-fuchsia-200 hover:bg-fuchsia-500/20"
       >
         <Printer size={13} /> Imprimir / PDF
