@@ -843,3 +843,188 @@ export function pmOperatingPoint(Br: number, muRec: number, permeance: number) {
   const Bm = Br + slopeMag * Hm
   return { Hm, Bm, energyProduct: Math.abs(Bm * Hm) }
 }
+
+// ---------------------------------------------------------------------------
+// Capítulo 7 — Máquinas de inducción (motor asíncrono polifásico)
+// ---------------------------------------------------------------------------
+
+/** Divide complejos: a / b. */
+export const cdiv = (a: Complex, b: Complex): Complex => {
+  const d = b.re * b.re + b.im * b.im
+  return cx((a.re * b.re + a.im * b.im) / d, (a.im * b.re - a.re * b.im) / d)
+}
+/** Multiplica complejos: a · b. */
+export const cmul = (a: Complex, b: Complex): Complex =>
+  cx(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re)
+/** Paralelo de dos impedancias: (a·b)/(a+b). */
+export const cpar = (a: Complex, b: Complex): Complex => cdiv(cmul(a, b), add(a, b))
+
+/**
+ * Parámetros del circuito equivalente por fase del motor de inducción,
+ * referidos al estator. Convención de motor: la corriente ENTRA a la máquina.
+ */
+export interface InductionParams {
+  /** Tensión de fase aplicada [V] */
+  V: number
+  /** Frecuencia de línea [Hz] */
+  f: number
+  /** Número de polos */
+  poles: number
+  /** Resistencia del estator R1 [Ω] */
+  R1: number
+  /** Reactancia de dispersión del estator X1 [Ω] */
+  X1: number
+  /** Resistencia del rotor referida R2 [Ω] */
+  R2: number
+  /** Reactancia de dispersión del rotor referida X2 [Ω] */
+  X2: number
+  /** Reactancia de magnetización Xm [Ω] */
+  Xm: number
+  /** Pérdidas en el núcleo [W trifásicos] (modeladas aparte de la rama) */
+  Pcore: number
+  /** Pérdidas por fricción y ventilación [W] */
+  Pfw: number
+}
+
+/** Motor de 4 polos, 60 Hz, 460 V (fase), tamaño mediano — parámetros típicos. */
+export const DEFAULT_INDUCTION: InductionParams = {
+  V: 460 / Math.sqrt(3),
+  f: 60,
+  poles: 4,
+  R1: 0.2,
+  X1: 0.5,
+  R2: 0.15,
+  X2: 0.5,
+  Xm: 15,
+  Pcore: 400,
+  Pfw: 250,
+}
+
+/** Velocidad síncrona mecánica [rad/s] a partir de f y polos. */
+export const syncSpeedRad = (f: number, poles: number): number =>
+  (2 * Math.PI * f) / (poles / 2)
+
+/** Frecuencia de las variables del rotor: fr = s·fe. */
+export const rotorFrequency = (s: number, f: number): number => s * f
+
+export interface InductionPoint {
+  s: number
+  /** Velocidad mecánica [r/min] */
+  nm: number
+  /** Corriente de línea (estator) [A] y su magnitud */
+  I1: Complex
+  I1mag: number
+  /** Factor de potencia de entrada */
+  pf: number
+  /** Corriente del rotor referida [A] */
+  I2mag: number
+  /** Potencia de entrehierro (trifásica) [W] */
+  Pgap: number
+  /** Par electromagnético interno [N·m] */
+  Tind: number
+  /** Pérdidas en el cobre del estator [W] */
+  Pscl: number
+  /** Pérdidas en el cobre del rotor [W] = s·Pgap */
+  Prcl: number
+  /** Potencia mecánica desarrollada [W] = (1−s)·Pgap */
+  Pmech: number
+  /** Potencia de entrada [W] */
+  Pin: number
+  /** Potencia de salida en el eje [W] = Pmech − Pfw */
+  Pout: number
+  /** Rendimiento */
+  eff: number
+}
+
+/**
+ * Resuelve el circuito equivalente para un deslizamiento s dado.
+ * Rama del rotor: R2/s + jX2. Rama de magnetización: jXm en paralelo.
+ * Pgap = 3·|I2|²·(R2/s); Tind = Pgap/ωs; Prcl = s·Pgap; Pmech = (1−s)·Pgap.
+ */
+export function inductionSolve(p: InductionParams, s: number): InductionPoint {
+  const ws = syncSpeedRad(p.f, p.poles)
+  const ns = (120 * p.f) / p.poles
+  const ss = Math.abs(s) < 1e-6 ? 1e-6 : s
+  const Zstator = cx(p.R1, p.X1)
+  const Zrotor = cx(p.R2 / ss, p.X2)
+  const Zmag = cx(0, p.Xm)
+  const Zf = cpar(Zrotor, Zmag) // rama de rotor ∥ magnetización
+  const Zin = add(Zstator, Zf)
+  const Vp = cx(p.V, 0)
+  const I1 = cdiv(Vp, Zin)
+  const E = cmul(I1, Zf) // tensión de entrehierro (sobre la rama paralela)
+  const I2 = cdiv(E, Zrotor)
+  const I2mag = abs(I2)
+  const Pgap = 3 * I2mag * I2mag * (p.R2 / ss)
+  const Tind = Pgap / ws
+  const Pscl = 3 * abs(I1) * abs(I1) * p.R1
+  const Prcl = ss * Pgap
+  const Pmech = (1 - ss) * Pgap
+  const Pin = 3 * (Vp.re * I1.re + Vp.im * I1.im) // 3·Re{V·I1*}, V real
+  const Pout = Pmech - p.Pfw
+  const eff = Pin > 0 ? Pout / (Pin + p.Pcore) : 0
+  const pf = I1.re / abs(I1)
+  return {
+    s,
+    nm: (1 - s) * ns,
+    I1,
+    I1mag: abs(I1),
+    pf,
+    I2mag,
+    Pgap,
+    Tind,
+    Pscl,
+    Prcl,
+    Pmech,
+    Pin: Pin + p.Pcore,
+    Pout,
+    eff,
+  }
+}
+
+export interface Thevenin {
+  Vth: number
+  Rth: number
+  Xth: number
+}
+
+/**
+ * Equivalente de Thévenin visto por la rama del rotor (desde el entrehierro
+ * hacia la fuente): fuente V detrás de R1+jX1, con jXm en paralelo.
+ */
+export function inductionThevenin(p: InductionParams): Thevenin {
+  const Zm = cx(0, p.Xm)
+  const Zs = cx(p.R1, p.X1)
+  const Vth = abs(cmul(cx(p.V, 0), cdiv(Zm, add(Zs, Zm))))
+  const Zth = cpar(Zs, Zm)
+  return { Vth, Rth: Zth.re, Xth: Zth.im }
+}
+
+/**
+ * Par electromagnético por la fórmula de Thévenin (independiente de la rama
+ * de magnetización): T(s) = (3/ωs)·Vth²·(R2/s) / [(Rth+R2/s)² + (Xth+X2)²].
+ */
+export function inductionTorque(p: InductionParams, s: number): number {
+  const ws = syncSpeedRad(p.f, p.poles)
+  const th = inductionThevenin(p)
+  const ss = Math.abs(s) < 1e-6 ? 1e-6 : s
+  const denom = Math.pow(th.Rth + p.R2 / ss, 2) + Math.pow(th.Xth + p.X2, 2)
+  return (3 / ws) * (th.Vth * th.Vth * (p.R2 / ss)) / denom
+}
+
+/**
+ * Par máximo (de ruptura) y deslizamiento al que ocurre.
+ * s_maxT = R2 / √(Rth² + (Xth+X2)²)  → depende de R2.
+ * T_max  = (3/2ωs)·Vth² / [Rth + √(Rth² + (Xth+X2)²)]  → NO depende de R2.
+ */
+export function inductionMaxTorque(p: InductionParams): { Tmax: number; sMax: number } {
+  const ws = syncSpeedRad(p.f, p.poles)
+  const th = inductionThevenin(p)
+  const root = Math.sqrt(th.Rth * th.Rth + Math.pow(th.Xth + p.X2, 2))
+  const sMax = p.R2 / root
+  const Tmax = (3 / (2 * ws)) * (th.Vth * th.Vth) / (th.Rth + root)
+  return { Tmax, sMax }
+}
+
+/** Par de arranque (s = 1). */
+export const inductionStartTorque = (p: InductionParams): number => inductionTorque(p, 1)

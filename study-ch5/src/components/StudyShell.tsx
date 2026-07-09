@@ -31,10 +31,16 @@ import C2Section2 from '../sections/C2Section2'
 import C2Section3 from '../sections/C2Section3'
 import C3Section1 from '../sections/C3Section1'
 import C3Section2 from '../sections/C3Section2'
+import C7Section1 from '../sections/C7Section1'
+import C7Section2 from '../sections/C7Section2'
+import C7Section3 from '../sections/C7Section3'
+import C7Section4 from '../sections/C7Section4'
+import C7Section5 from '../sections/C7Section5'
+import C7Section6 from '../sections/C7Section6'
 
-type ChapterId = 1 | 2 | 3 | 4 | 5 | 6
+type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
-/** Acentos por capítulo: violeta (magnetismo), ámbar (transformadores), rosa (conversión), cian (fundamentos), esmeralda (régimen), rojo (transitorios) */
+/** Acentos por capítulo: violeta (magnetismo), ámbar (transformadores), rosa (conversión), cian (fundamentos), esmeralda (régimen), rojo (transitorios), teal (inducción) */
 const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: string; num: string; boxOn: string; lbl: string }> = {
   1: { tab: 'text-violet-300', btnOn: 'border-violet-500/50 bg-violet-500/10', btnTxt: 'text-violet-300', box: 'border-violet-500/30', num: 'text-violet-400', boxOn: 'border-violet-500/40 bg-violet-500/5', lbl: 'text-violet-400/70' },
   2: { tab: 'text-amber-300', btnOn: 'border-amber-500/50 bg-amber-500/10', btnTxt: 'text-amber-300', box: 'border-amber-500/30', num: 'text-amber-400', boxOn: 'border-amber-500/40 bg-amber-500/5', lbl: 'text-amber-400/70' },
@@ -42,6 +48,7 @@ const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: 
   4: { tab: 'text-sky-300', btnOn: 'border-sky-500/50 bg-sky-500/10', btnTxt: 'text-sky-300', box: 'border-sky-500/30', num: 'text-sky-400', boxOn: 'border-sky-500/40 bg-sky-500/5', lbl: 'text-sky-400/70' },
   5: { tab: 'text-emerald-300', btnOn: 'border-emerald-500/50 bg-emerald-500/10', btnTxt: 'text-emerald-300', box: 'border-emerald-500/30', num: 'text-emerald-400', boxOn: 'border-emerald-500/40 bg-emerald-500/5', lbl: 'text-emerald-500/70' },
   6: { tab: 'text-red-300', btnOn: 'border-red-500/50 bg-red-500/10', btnTxt: 'text-red-300', box: 'border-red-500/30', num: 'text-red-400', boxOn: 'border-red-500/40 bg-red-500/5', lbl: 'text-red-400/70' },
+  7: { tab: 'text-teal-300', btnOn: 'border-teal-500/50 bg-teal-500/10', btnTxt: 'text-teal-300', box: 'border-teal-500/30', num: 'text-teal-400', boxOn: 'border-teal-500/40 bg-teal-500/5', lbl: 'text-teal-400/70' },
 }
 
 interface SectionDef {
@@ -237,6 +244,60 @@ const SECTIONS: SectionDef[] = [
     items: ['Saliencia invertida: cresta > 90°', 'Escalera de reactancias y T′d0 = T′d·Xd/X′d', 'La escalera de modelos', 'Problema 15: la curva completa'],
     component: C6Section4,
   },
+  {
+    chapter: 7,
+    num: 1,
+    prefix: 'c7s1-',
+    short: 'Concepto y s',
+    title: 'El motor de inducción: campo giratorio y deslizamiento',
+    items: ['nₛ = 120f/p: el campo que gira solo', 'Inducción: transformador con movimiento', 's = (nₛ−nₘ)/nₛ', 'Problema 26: deslizamiento y fᵣ'],
+    component: C7Section1,
+  },
+  {
+    chapter: 7,
+    num: 2,
+    prefix: 'c7s2-',
+    short: 'Frecuencia rotor',
+    title: 'Frecuencia, FEM y reactancia del rotor (todo con s)',
+    items: ['fᵣ = s·fₑ', 'E₂ₛ = s·E₂, X₂ₛ = s·X₂', 'Problema 27: arranque vs marcha'],
+    component: C7Section2,
+  },
+  {
+    chapter: 7,
+    num: 3,
+    prefix: 'c7s3-',
+    short: 'Circuito equiv.',
+    title: 'El circuito equivalente y la partición de R₂/s',
+    items: ['R₁, X₁, Rc∥Xm, X₂, R₂/s', 'R₂/s = R₂ + R₂(1−s)/s', 'Problema 28: circuito a plena carga'],
+    component: C7Section3,
+  },
+  {
+    chapter: 7,
+    num: 4,
+    prefix: 'c7s4-',
+    short: 'Rendimiento',
+    title: 'Potencia de entrehierro, par y rendimiento',
+    items: ['Pgap y el reparto 1 : s : (1−s)', 'Tind = Pgap/ωs · Thévenin', 'Árbol de pérdidas y η', 'Problema 29: par y eficiencia'],
+    component: C7Section4,
+  },
+  {
+    chapter: 7,
+    num: 5,
+    prefix: 'c7s5-',
+    short: 'Par-velocidad',
+    title: 'Característica par-velocidad: arranque, Tmax y R₂',
+    items: ['Arranque, ruptura y tramo estable', 'Tmax ⊥ R₂; s_maxT ∝ R₂', 'Problema 30: arranque y ruptura'],
+    component: C7Section5,
+  },
+  {
+    chapter: 7,
+    num: 6,
+    prefix: 'c7s6-',
+    short: 'Jaula vs devanado',
+    title: 'Jaula, doble jaula y rotor devanado',
+    items: ['El dilema de R₂', 'Barra profunda: R₂ que cambia sola', 'Rotor devanado: R externa', 'Problema 31: R₂ para Tmax en arranque'],
+    component: C7Section6,
+  },
 ]
 
 const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
@@ -246,6 +307,7 @@ const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
   { id: 4, label: 'Capítulo 4', sub: 'Conceptos básicos' },
   { id: 5, label: 'Capítulo 5', sub: 'Régimen permanente' },
   { id: 6, label: 'Capítulo 6', sub: 'Régimen transitorio' },
+  { id: 7, label: 'Capítulo 7', sub: 'Máquinas de inducción' },
 ]
 
 const ACTIVE_KEY = 'fku-ch5-active-section'
@@ -525,8 +587,9 @@ export default function StudyShell() {
                 <span className="text-amber-300">2 · Transformadores</span>,{' '}
                 <span className="text-rose-300">3 · Conversión de energía</span>,{' '}
                 <span className="text-sky-300">4 · Conceptos básicos</span>,{' '}
-                <span className="text-emerald-300">5 · Régimen permanente</span> o{' '}
-                <span className="text-red-300">6 · Régimen transitorio</span>.
+                <span className="text-emerald-300">5 · Régimen permanente</span>,{' '}
+                <span className="text-red-300">6 · Régimen transitorio</span> o{' '}
+                <span className="text-teal-300">7 · Máquinas de inducción</span>.
               </p>
             </div>
           )}
