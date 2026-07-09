@@ -1,12 +1,6 @@
 import { useState } from 'react'
 import { FlaskConical } from 'lucide-react'
-
-type Part = 'estator' | 'rotor' | 'entrehierro' | 'campo' | 'armadura'
-type Machine = 'sincrona' | 'induccion'
-
-/** Colores coherentes con el resto del documento (paleta validada) */
-const HL = '#c98500' // resaltado de la parte seleccionada
-const COLORS = { steel: '#27272a', edge: '#52525b', copper: '#3987e5', field: '#e66767', gap: '#199e70' }
+import MachineScene, { type Machine, type Part } from './anatomy3d/MachineScene'
 
 const INFO: Record<Machine, Record<Part, { title: string; text: string }>> = {
   sincrona: {
@@ -59,12 +53,7 @@ export default function AnatomyLab() {
   const [machine, setMachine] = useState<Machine>('sincrona')
   const [part, setPart] = useState<Part>('entrehierro')
 
-  const sel = (p: Part) => (part === p ? HL : undefined)
   const info = INFO[machine][part]
-
-  const cx = 170
-  const cy = 150
-  const slotN = 24
 
   return (
     <div className="lab-panel my-6 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/60">
@@ -98,74 +87,12 @@ export default function AnatomyLab() {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        <svg viewBox="0 0 340 300" className="w-full max-w-sm shrink-0 select-none">
-          {/* Estator */}
-          <g className="cursor-pointer" onClick={() => setPart('estator')}>
-            <circle cx={cx} cy={cy} r={128} fill={COLORS.steel} stroke={sel('estator') ?? COLORS.edge} strokeWidth={sel('estator') ? 3 : 1.5} />
-            <circle cx={cx} cy={cy} r={86} fill="#09090b" stroke="none" />
-          </g>
-          {/* Ranuras + armadura */}
-          <g className="cursor-pointer" onClick={() => setPart('armadura')}>
-            {Array.from({ length: slotN }, (_, i) => {
-              const a = (i / slotN) * 2 * Math.PI
-              const r = 96
-              return (
-                <circle key={i} cx={cx + r * Math.cos(a)} cy={cy - r * Math.sin(a)}
-                  r={5} fill={sel('armadura') ?? COLORS.copper} opacity={0.9} />
-              )
-            })}
-          </g>
-          {/* Entrehierro (anillo) */}
-          <g className="cursor-pointer" onClick={() => setPart('entrehierro')}>
-            <circle cx={cx} cy={cy} r={82} fill="none"
-              stroke={sel('entrehierro') ?? COLORS.gap} strokeWidth={sel('entrehierro') ? 6 : 3}
-              strokeDasharray="4 4" opacity={0.9} />
-          </g>
-          {/* Rotor */}
-          {machine === 'sincrona' ? (
-            <g className="cursor-pointer" onClick={() => setPart('rotor')}>
-              {/* núcleo + dos polos salientes */}
-              <circle cx={cx} cy={cy} r={34} fill={COLORS.steel} stroke={sel('rotor') ?? COLORS.edge} strokeWidth={sel('rotor') ? 3 : 1.5} />
-              {[0, Math.PI].map((a) => (
-                <g key={a} transform={`rotate(${(-a * 180) / Math.PI + 25} ${cx} ${cy})`}>
-                  <rect x={cx + 26} y={cy - 16} width={36} height={32} rx={5}
-                    fill={COLORS.steel} stroke={sel('rotor') ?? COLORS.edge} strokeWidth={sel('rotor') ? 3 : 1.5} />
-                  <path d={`M ${cx + 60} ${cy - 26} A 78 78 0 0 1 ${cx + 60} ${cy + 26} L ${cx + 56} ${cy + 18} A 66 66 0 0 0 ${cx + 56} ${cy - 18} Z`}
-                    fill={COLORS.steel} stroke={sel('rotor') ?? COLORS.edge} strokeWidth={1.5} />
-                </g>
-              ))}
-              {/* bobinas de campo */}
-              <g className="cursor-pointer" onClick={(e) => { e.stopPropagation(); setPart('campo') }}>
-                {[25, 205].map((deg) => (
-                  <g key={deg} transform={`rotate(${-deg} ${cx} ${cy})`}>
-                    <rect x={cx + 28} y={cy - 22} width={30} height={7} rx={3} fill={sel('campo') ?? COLORS.field} />
-                    <rect x={cx + 28} y={cy + 15} width={30} height={7} rx={3} fill={sel('campo') ?? COLORS.field} />
-                  </g>
-                ))}
-              </g>
-              <text x={cx} y={cy + 4} textAnchor="middle" fill="#71717a" fontSize={10}>N — S</text>
-            </g>
-          ) : (
-            <g className="cursor-pointer" onClick={() => setPart('rotor')}>
-              <circle cx={cx} cy={cy} r={76} fill={COLORS.steel} stroke={sel('rotor') ?? COLORS.edge} strokeWidth={sel('rotor') ? 3 : 1.5} />
-              {/* barras de jaula */}
-              {Array.from({ length: 18 }, (_, i) => {
-                const a = (i / 18) * 2 * Math.PI
-                const r = 66
-                return (
-                  <circle key={i} cx={cx + r * Math.cos(a)} cy={cy - r * Math.sin(a)}
-                    r={4.5} fill={sel('campo') ?? '#9085e9'}
-                    className="cursor-pointer"
-                    onClick={(e) => { e.stopPropagation(); setPart('campo') }} />
-                )
-              })}
-              <text x={cx} y={cy + 4} textAnchor="middle" fill="#71717a" fontSize={9}>jaula en corto</text>
-            </g>
-          )}
-          {/* Etiquetas directas */}
-          <text x={cx} y={16} textAnchor="middle" fill="#a1a1aa" fontSize={10}>estator (fijo)</text>
-          <text x={cx} y={294} textAnchor="middle" fill="#a1a1aa" fontSize={10}>corte transversal — el eje sale de la página</text>
-        </svg>
+        <div className="relative h-72 w-full max-w-sm shrink-0 touch-none sm:h-80">
+          <MachineScene machine={machine} part={part} onSelect={setPart} />
+          <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/40 px-1.5 py-0.5 text-[9px] text-zinc-400">
+            arrastra para rotar · corte revela el interior
+          </span>
+        </div>
 
         <div className="flex-1 p-3">
           <div className="mb-2 flex flex-wrap gap-1.5">
