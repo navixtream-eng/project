@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { FlaskConical } from 'lucide-react'
 import { actuatorForce, actuatorL } from '../lib/machine'
-
-/** Paleta validada: hierro zinc, bobina amarilla, fuerza roja, flujo azul */
-const C = { steel: '#27272a', edge: '#52525b', coil: '#c98500', force: '#e66767', flux: '#3987e5' }
+import ActuatorScene from './anatomy3d/ActuatorScene'
 
 function Readout({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
@@ -32,8 +30,13 @@ export default function ActuatorForceLab() {
   // Fuerza a la mitad del gap (para ilustrar el crecimiento ∝ 1/g²)
   const Fhalf = actuatorForce(N, A, I, gMm / 2)
 
-  // Dibujo: el gap se muestra proporcional
-  const gapPx = 6 + gMm * 10
+  // Mapeo de la física a proporciones visuales del modelo 3D
+  const turns = Math.max(3, Math.min(12, Math.round(N / 80)))
+  const gapVisual = 0.035 + gMm * 0.06
+  const fluxProxy = (N * I) / gMm
+  const fluxRadius = Math.max(0.02, Math.min(0.075, 0.02 + Math.log10(fluxProxy) * 0.012))
+  const fluxSpeed = Math.max(0.06, Math.min(0.25, 0.06 + I * 0.03))
+  const forceLen = Math.max(0.18, Math.min(0.6, 0.15 + Math.log10(F + 1) * 0.12))
 
   return (
     <div className="lab-panel my-6 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/60">
@@ -66,30 +69,21 @@ export default function ActuatorForceLab() {
       </div>
 
       <div className="flex flex-col items-center gap-2 sm:flex-row">
-        <svg viewBox="0 0 340 200" className="w-full max-w-sm shrink-0 select-none">
-          {/* Yugo fijo en forma de C */}
-          <path d="M 40 40 H 200 V 70 H 90 V 130 H 200 V 160 H 40 Z"
-            fill={C.steel} stroke={C.edge} strokeWidth={1.5} />
-          {/* Bobina */}
-          {Array.from({ length: 6 }, (_, k) => (
-            <rect key={k} x={44} y={72 + k * 9} width={30} height={6} rx={2} fill={C.coil} opacity={0.9} />
-          ))}
-          <text x={20} y={105} fill={C.coil} fontSize={11} fontWeight={700}>N·i</text>
-          {/* Émbolo móvil */}
-          <rect x={200 + gapPx} y={55} width={70} height={90} rx={4}
-            fill={C.steel} stroke={C.edge} strokeWidth={1.5} />
-          {/* Gap marcado */}
-          <line x1={200} y1={100} x2={200 + gapPx} y2={100} stroke={C.force} strokeWidth={2} />
-          <text x={200 + gapPx / 2 - 4} y={92} fill={C.force} fontSize={10} fontWeight={700}>g</text>
-          {/* Flechas de fuerza (émbolo jalado hacia el yugo) */}
-          <line x1={235 + gapPx} y1={100} x2={210 + gapPx} y2={100} stroke={C.force} strokeWidth={3} />
-          <path d={`M ${210 + gapPx} 100 l 10 -6 l 0 12 Z`} fill={C.force} />
-          <text x={240 + gapPx} y={104} fill={C.force} fontSize={11} fontWeight={700}>f</text>
-          {/* Flujo */}
-          <path d="M 65 50 H 175 V 90" fill="none" stroke={C.flux} strokeWidth={2} strokeDasharray="5 3" opacity={0.7} />
-          <text x={110} y={36} fill={C.flux} fontSize={10}>φ</text>
-          <text x={40} y={182} fill="#71717a" fontSize={10}>el campo SIEMPRE tira de cerrar el gap</text>
-        </svg>
+        <div className="relative h-72 w-full max-w-sm shrink-0 touch-none sm:h-80">
+          <ActuatorScene
+            turns={turns}
+            gapVisual={gapVisual}
+            fluxRadius={fluxRadius}
+            forceLen={forceLen}
+            fluxSpeed={fluxSpeed}
+          />
+          <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/40 px-1.5 py-0.5 text-[9px] text-zinc-400">
+            arrastra para rotar · <span className="text-amber-300">N·i</span> → φ cruza el gap · <span className="text-red-300">f</span> cierra el gap
+          </span>
+          <span className="pointer-events-none absolute bottom-2 left-2 rounded bg-black/40 px-1.5 py-0.5 text-[9px] text-zinc-500">
+            el campo SIEMPRE tira de cerrar el gap
+          </span>
+        </div>
 
         <div className="grid flex-1 grid-cols-2 gap-2 p-3">
           <Readout label="L(g) = μ₀N²A/g" value={`${(L * 1000).toFixed(1)} mH`} />
