@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { FlaskConical } from 'lucide-react'
-
-/** Colores coherentes con el documento (paleta validada) */
-const COLORS = { core: '#27272a', edge: '#52525b', coil: '#c98500', flux: '#3987e5', gap: '#e66767', fringe: '#9085e9' }
+import MagneticCircuitScene from './anatomy3d/MagneticCircuitScene'
 
 const MU0 = 4 * Math.PI * 1e-7
 /** Núcleo cuadrado: longitud media del camino y sección */
@@ -44,8 +42,10 @@ export default function MagneticCircuitLab() {
   const gapShare = Rg / (Rc + Rg)
   const saturado = Bc > 1.6
 
-  // Geometría del dibujo
-  const fluxW = Math.max(1.5, Math.min(9, Bc * 5))
+  // Mapeo de la física a proporciones visuales del modelo 3D
+  const turns = Math.round(6 + ((N - 100) / 900) * 8)
+  const gapVisual = gMm > 0 ? Math.min(0.5, 0.04 + gMm * 0.08) : 0
+  const fluxRadius = Math.max(0.016, Math.min(0.095, Bc * 0.045))
 
   return (
     <div className="lab-panel my-6 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/60">
@@ -89,47 +89,23 @@ export default function MagneticCircuitLab() {
       </div>
 
       <div className="flex flex-col items-center gap-2 sm:flex-row">
-        <svg viewBox="0 0 340 260" className="w-full max-w-sm shrink-0 select-none">
-          {/* Núcleo: marco cuadrado con hueco central */}
-          <path d="M 60 30 H 280 V 230 H 60 Z M 105 75 H 235 V 185 H 105 Z"
-            fill={COLORS.core} stroke={COLORS.edge} strokeWidth={1.5} fillRule="evenodd" />
-          {/* Entrehierro en la pierna derecha */}
-          {gMm > 0 && (
-            <g>
-              <rect x={235} y={124} width={45} height={4 + gMm * 3} fill="#09090b" />
-              <line x1={235} y1={124} x2={280} y2={124} stroke={COLORS.gap} strokeWidth={2} />
-              <line x1={235} y1={128 + gMm * 3} x2={280} y2={128 + gMm * 3} stroke={COLORS.gap} strokeWidth={2} />
-              <text x={288} y={130} fill={COLORS.gap} fontSize={11} fontWeight={700}>g</text>
-              {/* Franjeo: líneas que se abomban hacia afuera */}
-              {fringing && (
-                <g stroke={COLORS.fringe} strokeWidth={1.3} fill="none" opacity={0.8}>
-                  <path d={`M 238 124 C 230 ${126 + gMm * 1.5} 230 ${126 + gMm * 1.5} 238 ${128 + gMm * 3}`} />
-                  <path d={`M 277 124 C 285 ${126 + gMm * 1.5} 285 ${126 + gMm * 1.5} 277 ${128 + gMm * 3}`} />
-                  <path d={`M 236 122 C 222 ${126 + gMm * 1.5} 222 ${126 + gMm * 1.5} 236 ${130 + gMm * 3}`} opacity={0.5} />
-                  <path d={`M 279 122 C 293 ${126 + gMm * 1.5} 293 ${126 + gMm * 1.5} 279 ${130 + gMm * 3}`} opacity={0.5} />
-                </g>
-              )}
-            </g>
-          )}
-          {/* Bobina en la pierna izquierda */}
-          {Array.from({ length: 7 }, (_, k) => (
-            <rect key={k} x={48} y={88 + k * 13} width={36} height={9} rx={4}
-              fill={COLORS.coil} opacity={0.9} />
-          ))}
-          <text x={20} y={135} fill={COLORS.coil} fontSize={12} fontWeight={700}>N·I</text>
-          {/* Flujo: lazo con grosor ∝ B */}
-          <path d="M 82 52 H 258 V 118" fill="none" stroke={COLORS.flux} strokeWidth={fluxW} opacity={0.85} markerEnd="url(#fluxArrow)" />
-          <path d={`M 258 ${134 + gMm * 3} V 208 H 82 V 60`} fill="none" stroke={COLORS.flux} strokeWidth={fluxW} opacity={0.85} />
-          <defs>
-            <marker id="fluxArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-              <path d="M 0 0 L 8 4 L 0 8 Z" fill={COLORS.flux} />
-            </marker>
-          </defs>
-          <text x={150} y={46} fill={COLORS.flux} fontSize={12} fontWeight={700}>φ</text>
+        <div className="relative h-72 w-full max-w-sm shrink-0 touch-none sm:h-80">
+          <MagneticCircuitScene
+            turns={turns}
+            gapVisual={gapVisual}
+            fluxRadius={fluxRadius}
+            fringing={fringing}
+            saturado={saturado}
+          />
+          <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/40 px-1.5 py-0.5 text-[9px] text-zinc-400">
+            arrastra para rotar · N·I (ámbar) → φ (azul) cruza el entrehierro (g)
+          </span>
           {saturado && (
-            <text x={110} y={215} fill="#e66767" fontSize={11} fontWeight={700}>⚠ hierro saturado (B &gt; 1.6 T)</text>
+            <span className="pointer-events-none absolute bottom-2 left-2 rounded bg-red-950/70 px-1.5 py-0.5 text-[10px] font-semibold text-red-300">
+              ⚠ hierro saturado (B &gt; 1.6 T)
+            </span>
           )}
-        </svg>
+        </div>
 
         <div className="grid flex-1 grid-cols-2 gap-2 p-3">
           <Readout label="F = N·I" value={`${F.toFixed(0)} A·v`} accent="text-amber-300" />
