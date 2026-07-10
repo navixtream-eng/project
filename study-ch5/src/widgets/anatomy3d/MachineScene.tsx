@@ -1,15 +1,25 @@
-import { Suspense, useMemo, useRef } from 'react'
-import { Canvas, type ThreeEvent, useFrame } from '@react-three/fiber'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { Canvas, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
 import { ContactShadows, Environment, Lightformer, OrbitControls } from '@react-three/drei'
+import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import type { Group } from 'three'
 import { annulusWedgeShape, DIMS, extrudeAxial, toRad } from './shapes'
 
 export type Part = 'estator' | 'rotor' | 'entrehierro' | 'campo' | 'armadura'
 export type Machine = 'sincrona' | 'induccion'
 
-const HL = '#c98500'
-const COLORS = { steel: '#27272a', edge: '#52525b', copper: '#3987e5', field: '#e66767', gap: '#199e70' }
-const CAGE_COLOR = '#9085e9'
+// Paleta «render de estudio»: hierro polar rojo, barras azules, cobre naranja
+// pulido, entrehierro ámbar incandescente y realce dorado al seleccionar.
+const HL = '#f6c945'
+const COLORS = {
+  core: '#2b2e36', // núcleo laminado
+  housing: '#16181d', // carcasa exterior lisa
+  shaft: '#cbd0d8', // eje de acero pulido
+  copper: '#e17b2c', // devanados de cobre (naranja brillante)
+  bar: '#2f6fe0', // conductores / barras (azul)
+  field: '#c0392b', // zapatas polares (rojo)
+  gap: '#f5a524', // entrehierro (ámbar incandescente)
+} as const
 
 function Clickable({
   onSelect,
@@ -37,14 +47,18 @@ function Clickable({
   )
 }
 
-function partMat(base: string, isSel: boolean, opts: { metalness?: number; roughness?: number } = {}) {
+function partMat(
+  base: string,
+  isSel: boolean,
+  opts: { metalness?: number; roughness?: number; emissive?: number } = {},
+) {
   return (
     <meshStandardMaterial
       color={isSel ? HL : base}
       metalness={opts.metalness ?? 0.75}
       roughness={opts.roughness ?? 0.35}
-      emissive={isSel ? HL : '#000000'}
-      emissiveIntensity={isSel ? 0.32 : 0}
+      emissive={isSel ? HL : base}
+      emissiveIntensity={isSel ? 0.45 : (opts.emissive ?? 0)}
     />
   )
 }
@@ -71,6 +85,11 @@ function Machine3D({
   const visStart = toRad(DIMS.cutawayCenterDeg + missingHalf)
   const visEnd = toRad(DIMS.cutawayCenterDeg - missingHalf + 360)
 
+  // Carcasa exterior lisa (con el mismo corte que el núcleo)
+  const housingGeo = useMemo(
+    () => extrudeAxial(annulusWedgeShape(DIMS.statorOuterR * 1.07, DIMS.statorOuterR * 0.99, visStart, visEnd), coreLen * 1.04),
+    [visStart, visEnd, coreLen],
+  )
   const statorGeo = useMemo(
     () => extrudeAxial(annulusWedgeShape(DIMS.statorOuterR, DIMS.statorBoreR, visStart, visEnd), coreLen),
     [visStart, visEnd, coreLen],
@@ -93,46 +112,65 @@ function Machine3D({
   )
 
   const isSel = (p: Part) => part === p
+  const boreR = DIMS.statorBoreR - 0.02
+  const endZ = (coreLen * 0.86) / 2
 
   return (
     <group rotation={[0, Math.PI / 2, 0]}>
-      {/* --- Estator (fijo) --- */}
+      {/* --- Estator: carcasa lisa + núcleo laminado --- */}
       <Clickable onSelect={() => onSelect('estator')}>
-        <mesh geometry={statorGeo} castShadow receiveShadow>
-          {partMat(COLORS.steel, isSel('estator'), { metalness: 0.65, roughness: 0.42 })}
+        <mesh geometry={housingGeo} castShadow receiveShadow>
+          {partMat(COLORS.housing, isSel('estator'), { metalness: 0.55, roughness: 0.5 })}
         </mesh>
+        <mesh geometry={statorGeo} castShadow receiveShadow>
+          {partMat(COLORS.core, isSel('estator'), { metalness: 0.72, roughness: 0.34 })}
+        </mesh>
+        {/* Tapas / campanas de los extremos */}
+        {[-1, 1].map((s) => (
+          <mesh key={s} position={[0, 0, s * (coreLen * 0.52)]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+            <cylinderGeometry args={[DIMS.statorOuterR * 1.03, DIMS.statorOuterR * 1.03, 0.06, 48]} />
+            {partMat(COLORS.housing, isSel('estator'), { metalness: 0.6, roughness: 0.45 })}
+          </mesh>
+        ))}
       </Clickable>
 
-      {/* --- Armadura: conductores en las ranuras del estator --- */}
+      {/* --- Armadura: barras azules en las ranuras + cabezas de bobina de cobre --- */}
       <Clickable onSelect={() => onSelect('armadura')}>
         {Array.from({ length: DIMS.slotCount }, (_, i) => {
           const a = (i / DIMS.slotCount) * Math.PI * 2
-          const r = DIMS.statorBoreR - 0.02
           return (
             <mesh
               key={i}
-              position={[r * Math.cos(a), r * Math.sin(a), 0]}
+              position={[boreR * Math.cos(a), boreR * Math.sin(a), 0]}
               rotation={[Math.PI / 2, 0, 0]}
               castShadow
             >
               <cylinderGeometry args={[0.045, 0.045, coreLen * 0.86, 10]} />
-              {partMat(COLORS.copper, isSel('armadura'), { metalness: 0.85, roughness: 0.28 })}
+              {partMat(COLORS.bar, isSel('armadura'), { metalness: 0.6, roughness: 0.3 })}
             </mesh>
           )
         })}
+        {/* Cabezas de bobina (end-turns) de cobre pulido que sobresalen del núcleo */}
+        {[-1, 1].map((side) => (
+          <mesh key={side} position={[0, 0, side * (endZ + 0.04)]} rotation={[0, 0, 0]} castShadow>
+            <torusGeometry args={[boreR, 0.075, 20, 60]} />
+            {partMat(COLORS.copper, isSel('armadura'), { metalness: 1, roughness: 0.16 })}
+          </mesh>
+        ))}
       </Clickable>
 
-      {/* --- Entrehierro: anillo delgado y emisivo entre rotor y estator --- */}
+      {/* --- Entrehierro: anillo ámbar incandescente entre rotor y estator --- */}
       <Clickable onSelect={() => onSelect('entrehierro')}>
         <mesh geometry={gapGeo}>
           <meshStandardMaterial
             color={isSel('entrehierro') ? HL : COLORS.gap}
             emissive={isSel('entrehierro') ? HL : COLORS.gap}
-            emissiveIntensity={isSel('entrehierro') ? 1.1 : 0.55}
+            emissiveIntensity={isSel('entrehierro') ? 2.6 : 1.5}
             transparent
-            opacity={isSel('entrehierro') ? 0.65 : 0.4}
+            opacity={isSel('entrehierro') ? 0.68 : 0.5}
             metalness={0}
             roughness={1}
+            toneMapped={false}
           />
         </mesh>
       </Clickable>
@@ -140,53 +178,59 @@ function Machine3D({
       {/* --- Rotor + eje (gira) --- */}
       <group ref={spinRef}>
         <Clickable onSelect={() => onSelect('rotor')}>
+          {/* Eje de acero pulido (no se realza para no inundar la escena) */}
           <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
-            <cylinderGeometry args={[DIMS.shaftR, DIMS.shaftR, DIMS.machineLength + DIMS.shaftOverhang * 2, 24]} />
-            {partMat(COLORS.edge, false, { metalness: 0.9, roughness: 0.22 })}
+            <cylinderGeometry args={[DIMS.shaftR, DIMS.shaftR, DIMS.machineLength + DIMS.shaftOverhang * 2, 32]} />
+            {partMat(COLORS.shaft, false, { metalness: 0.95, roughness: 0.14 })}
           </mesh>
 
           {machine === 'sincrona' ? (
             <>
               <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
                 <cylinderGeometry args={[DIMS.hubR, DIMS.hubR, coreLen * 0.96, 32]} />
-                {partMat(COLORS.steel, isSel('rotor'), { metalness: 0.7, roughness: 0.38 })}
+                {partMat(COLORS.core, isSel('rotor'), { metalness: 0.72, roughness: 0.36 })}
               </mesh>
+              {/* Zapatas polares rojas */}
               {[0, Math.PI].map((ang) => (
                 <mesh key={ang} geometry={poleGeo} rotation={[0, 0, ang]} castShadow>
-                  {partMat(COLORS.steel, isSel('rotor'), { metalness: 0.7, roughness: 0.38 })}
+                  {partMat(COLORS.field, isSel('rotor'), { metalness: 0.35, roughness: 0.45 })}
                 </mesh>
               ))}
             </>
           ) : (
             <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
               <cylinderGeometry args={[rotorOuterR, rotorOuterR, coreLen * 0.94, 40]} />
-              {partMat(COLORS.steel, isSel('rotor'), { metalness: 0.7, roughness: 0.38 })}
+              {partMat(COLORS.core, isSel('rotor'), { metalness: 0.72, roughness: 0.36 })}
             </mesh>
           )}
         </Clickable>
 
-        {/* --- Campo: bobinas (síncrona) o jaula de ardilla (inducción) --- */}
+        {/* --- Campo: bobinas de cobre (síncrona) o jaula de ardilla (inducción) --- */}
         <Clickable onSelect={() => onSelect('campo')}>
           {machine === 'sincrona' ? (
-            [0, Math.PI].flatMap((poleAng) =>
-              [-1, 1].map((side) => {
-                const coilR = (DIMS.hubR + rotorOuterR) / 2
-                const z = (side * (coreLen * 0.94)) / 2 + side * 0.03
-                return (
-                  <mesh
-                    key={`${poleAng}-${side}`}
-                    position={[coilR * Math.cos(poleAng), coilR * Math.sin(poleAng), z]}
-                    rotation={[0, 0, poleAng]}
-                    castShadow
-                  >
-                    <boxGeometry args={[(rotorOuterR - DIMS.hubR) * 0.82, 0.15, 0.09]} />
-                    {partMat(COLORS.field, isSel('campo'), { metalness: 0.15, roughness: 0.55 })}
-                  </mesh>
-                )
-              }),
-            )
+            [0, Math.PI].flatMap((poleAng) => {
+              const coilR = (DIMS.hubR + rotorOuterR) / 2
+              // Bobinas de campo: varias vueltas de cobre a cada lado del polo
+              return [-1, 1].flatMap((side) =>
+                [0, 1, 2].map((turn) => {
+                  const z = (side * (coreLen * 0.94)) / 2 + side * (0.03 + turn * 0.055)
+                  return (
+                    <mesh
+                      key={`${poleAng}-${side}-${turn}`}
+                      position={[coilR * Math.cos(poleAng), coilR * Math.sin(poleAng), z]}
+                      rotation={[0, 0, poleAng]}
+                      castShadow
+                    >
+                      <boxGeometry args={[(rotorOuterR - DIMS.hubR) * 0.9, 0.16, 0.05]} />
+                      {partMat(COLORS.copper, isSel('campo'), { metalness: 1, roughness: 0.18 })}
+                    </mesh>
+                  )
+                }),
+              )
+            })
           ) : (
             <>
+              {/* Barras de la jaula (azules) */}
               {Array.from({ length: DIMS.cageBarCount }, (_, i) => {
                 const a = (i / DIMS.cageBarCount) * Math.PI * 2
                 const r = rotorOuterR - DIMS.cageBarR - 0.02
@@ -198,14 +242,15 @@ function Machine3D({
                     castShadow
                   >
                     <cylinderGeometry args={[DIMS.cageBarR, DIMS.cageBarR, coreLen * 1.02, 8]} />
-                    {partMat(CAGE_COLOR, isSel('campo'), { metalness: 0.8, roughness: 0.3 })}
+                    {partMat(COLORS.bar, isSel('campo'), { metalness: 0.6, roughness: 0.3 })}
                   </mesh>
                 )
               })}
+              {/* Anillos de cortocircuito de cobre pulido */}
               {[-1, 1].map((side) => (
                 <mesh key={side} position={[0, 0, (side * (coreLen * 1.02)) / 2]} castShadow>
-                  <torusGeometry args={[rotorOuterR - DIMS.cageBarR - 0.02, DIMS.cageRingTube, 12, 40]} />
-                  {partMat(CAGE_COLOR, isSel('campo'), { metalness: 0.8, roughness: 0.3 })}
+                  <torusGeometry args={[rotorOuterR - DIMS.cageBarR - 0.02, DIMS.cageRingTube, 16, 44]} />
+                  {partMat(COLORS.copper, isSel('campo'), { metalness: 1, roughness: 0.18 })}
                 </mesh>
               ))}
             </>
@@ -216,10 +261,19 @@ function Machine3D({
   )
 }
 
+/** Restablece la órbita de la cámara cuando cambia `signal`. */
+function ResetView({ signal }: { signal: number }) {
+  const controls = useThree((s) => s.controls) as { reset?: () => void } | null
+  useEffect(() => {
+    if (signal > 0 && controls?.reset) controls.reset()
+  }, [signal, controls])
+  return null
+}
+
 /** Sombra de contacto procedural (sin texturas externas) para anclar el modelo visualmente. */
 function Ground() {
   return (
-    <ContactShadows position={[0, -1.15, 0]} opacity={0.55} scale={6} blur={2.4} far={1.6} resolution={512} />
+    <ContactShadows position={[0, -1.15, 0]} opacity={0.6} scale={6} blur={2.4} far={1.6} resolution={512} />
   )
 }
 
@@ -227,10 +281,12 @@ export default function MachineScene({
   machine,
   part,
   onSelect,
+  resetSignal = 0,
 }: {
   machine: Machine
   part: Part
   onSelect: (p: Part) => void
+  resetSignal?: number
 }) {
   return (
     <Canvas
@@ -239,26 +295,31 @@ export default function MachineScene({
       camera={{ position: [1.9, 1.35, 2.75], fov: 38, near: 0.1, far: 50 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
     >
-      <color attach="background" args={['#0b0b0d']} />
-      <hemisphereLight args={['#6d7f99', '#0a0a0c', 0.65]} />
+      <color attach="background" args={['#07080b']} />
+      <hemisphereLight args={['#7d90ac', '#08090c', 0.7]} />
       <directionalLight
         position={[3, 4, 2.5]}
-        intensity={1.4}
+        intensity={1.5}
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-near={0.5}
         shadow-camera-far={12}
       />
-      <directionalLight position={[-3, 1.5, -2]} intensity={0.35} color="#3987e5" />
+      <directionalLight position={[-3, 1.5, -2]} intensity={0.4} color="#3f7fe0" />
+      <pointLight position={[0, 0, 2.4]} intensity={0.6} color="#f5a524" distance={6} />
 
       <Suspense fallback={null}>
         <Machine3D machine={machine} part={part} onSelect={onSelect} />
+        <ResetView signal={resetSignal} />
         <Ground />
         <Environment resolution={256} background={false}>
-          <Lightformer intensity={2.2} color="#f4f4f5" position={[0, 4, 2]} scale={[8, 8, 1]} form="rect" />
-          <Lightformer intensity={0.7} color="#3987e5" position={[-4, 1, 3]} scale={[6, 6, 1]} form="rect" />
-          <Lightformer intensity={0.7} color="#c98500" position={[4, 0.5, -3]} scale={[6, 6, 1]} form="rect" />
+          <Lightformer intensity={2.4} color="#f4f4f5" position={[0, 4, 2]} scale={[8, 8, 1]} form="rect" />
+          <Lightformer intensity={0.8} color="#3f7fe0" position={[-4, 1, 3]} scale={[6, 6, 1]} form="rect" />
+          <Lightformer intensity={0.8} color="#f0a35a" position={[4, 0.5, -3]} scale={[6, 6, 1]} form="rect" />
         </Environment>
+        <EffectComposer enableNormalPass={false}>
+          <Bloom luminanceThreshold={0.55} luminanceSmoothing={0.85} intensity={0.85} mipmapBlur />
+        </EffectComposer>
       </Suspense>
 
       <OrbitControls

@@ -1,6 +1,16 @@
 import { useState } from 'react'
-import { FlaskConical } from 'lucide-react'
+import { FlaskConical, RotateCcw } from 'lucide-react'
 import MachineScene, { type Machine, type Part } from './anatomy3d/MachineScene'
+
+// Puntos de color a juego con la paleta del render 3D
+const PART_COLOR: Record<Part, string> = {
+  estator: '#a1a1aa',
+  rotor: '#c0392b',
+  entrehierro: '#f5a524',
+  campo: '#e17b2c',
+  armadura: '#2f6fe0',
+}
+const PART_ORDER: Part[] = ['estator', 'rotor', 'entrehierro', 'campo', 'armadura']
 
 const INFO: Record<Machine, Record<Part, { title: string; text: string }>> = {
   sincrona: {
@@ -52,8 +62,10 @@ const INFO: Record<Machine, Record<Part, { title: string; text: string }>> = {
 export default function AnatomyLab() {
   const [machine, setMachine] = useState<Machine>('sincrona')
   const [part, setPart] = useState<Part>('entrehierro')
+  const [resetSignal, setResetSignal] = useState(0)
 
   const info = INFO[machine][part]
+  const partIdx = PART_ORDER.indexOf(part) + 1
 
   return (
     <div className="lab-panel my-6 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/60">
@@ -88,10 +100,20 @@ export default function AnatomyLab() {
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative h-72 w-full max-w-sm shrink-0 touch-none sm:h-80">
-          <MachineScene machine={machine} part={part} onSelect={setPart} />
-          <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/40 px-1.5 py-0.5 text-[9px] text-zinc-400">
-            arrastra para rotar · corte revela el interior
+          <MachineScene machine={machine} part={part} onSelect={setPart} resetSignal={resetSignal} />
+          <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/50 px-1.5 py-0.5 text-[9px] text-zinc-300">
+            Arrastra para rotar · el corte revela el interior
           </span>
+          <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-semibold text-amber-300 ring-1 ring-amber-500/40">
+            Explorando {partIdx} de 5
+          </span>
+          <button
+            type="button"
+            onClick={() => setResetSignal((v) => v + 1)}
+            className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-black/55 px-2 py-1 text-[10px] font-semibold text-zinc-200 ring-1 ring-zinc-600 hover:bg-black/75"
+          >
+            <RotateCcw size={11} /> Restablecer vista
+          </button>
         </div>
 
         <div className="flex-1 p-3">
@@ -106,17 +128,21 @@ export default function AnatomyLab() {
               ] as [Part, string][]
             ).map(([p, label]) => (
               <button key={p} type="button" onClick={() => setPart(p)}
-                className={`rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors ${
                   part === p
                     ? 'border-amber-500/60 bg-amber-500/10 text-amber-300'
                     : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500'
                 }`}>
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PART_COLOR[p] }} />
                 {label}
               </button>
             ))}
           </div>
           <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
-            <p className="mb-1 text-xs font-bold text-amber-300">{info.title}</p>
+            <p className="mb-1 flex items-center gap-1.5 text-xs font-bold text-amber-300">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: PART_COLOR[part] }} />
+              {info.title}
+            </p>
             <p className="text-xs leading-relaxed text-zinc-300">{info.text}</p>
           </div>
         </div>
