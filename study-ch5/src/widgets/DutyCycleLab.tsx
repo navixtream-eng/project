@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import { FlaskConical } from 'lucide-react'
-import { potenciaEquivalente, thermalCycle } from '../lib/termica'
+import { perdidasTotales, potenciaEquivalente, thermalCycle } from '../lib/termica'
+
+// Modelo de pérdidas del simulador térmico: 60 % cobre (∝ P²) + 40 % fijas
+const FCU = 0.6
 
 /**
  * Laboratorio — Tipos de servicio y potencia equivalente.
@@ -27,8 +30,8 @@ export default function DutyCycleLab() {
     () =>
       thermalCycle(
         [
-          { pLoss: (p1 / 100) ** 2, t: t1 },
-          { pLoss: (p2 / 100) ** 2, t: t2 },
+          { pLoss: perdidasTotales(p1 / 100, FCU), t: t1 },
+          { pLoss: perdidasTotales(p2 / 100, FCU), t: t2 },
           { pLoss: 0, t: tPar, parada: true },
         ],
         tau,
@@ -147,7 +150,13 @@ export default function DutyCycleLab() {
         vigila); (3) la parada pondera MENOS en el denominador (ventilación reducida, factor 0.4):
         quita la parada y mira el P_eq subir menos de lo que esperabas; (4) definición de los
         servicios IEC: S1 = continuo (el escalón del laboratorio anterior), S2 = tiempo limitado,
-        S3 = este ciclo periódico — la placa promete SOLO el servicio que declara.
+        S3 = este ciclo periódico — la placa promete SOLO el servicio que declara.{' '}
+        <strong className="text-zinc-300">Validez del método RMS:</strong> supone pérdidas
+        dominantemente cuadráticas y refrigeración ~constante en marcha; el simulador térmico de
+        arriba usa el modelo completo (60 % cobre ∝ P² + 40 % fijas) — por eso RMS y θ pico pueden
+        discrepar, y cuando discrepan manda la θ. No es una fórmula universal: motores con hierro
+        dominante, ventilación dependiente de la velocidad (variador) o ciclos largos exigen la
+        simulación o los datos del fabricante.
       </footer>
     </div>
   )

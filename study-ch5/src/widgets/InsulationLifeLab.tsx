@@ -107,7 +107,12 @@ export default function InsulationLifeLab() {
         motor industrial; (3) sube 10 °C por encima del límite: la vida se corta a la MITAD — un
         ventilador sucio o un derrateo ignorado no «desgastan un poco»: dividen años entre dos;
         (4) conecta con el Cap. 11: un desbalance del 3 % puede subir el punto caliente ~15-20 °C…
-        haz la cuenta de lo que cuesta en vida.
+        haz la cuenta de lo que cuesta en vida.{' '}
+        <strong className="text-zinc-300">Alcance de la regla:</strong> el «÷2 cada 10 °C» es la
+        aproximación de ingeniería de Arrhenius — el intervalo real varía ~8–12 °C según el sistema
+        de aislamiento concreto, y siempre sobre el punto CALIENTE, no el promedio. Órdenes de
+        magnitud y comparaciones: perfectos con la regla; garantías de vida: con las curvas del
+        fabricante.
       </footer>
     </div>
   )

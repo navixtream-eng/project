@@ -141,7 +141,7 @@ export default function C12Section4() {
         <ul className="list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-zinc-300">
           <li>La placa vale en condiciones de referencia (40 °C, ≤1000 m, red limpia y balanceada). Cada desviación multiplica un factor &lt; 1 — y el juez de todos es el mismo balance térmico R-C.</li>
           <li>El desbalance castiga al CUADRADO (NEMA): 2 % ⇒ −4 %, 5 % ⇒ −25 %. Conexión directa con la secuencia negativa del Cap. 11.</li>
-          <li>Selección honesta: carga ≤ placa × f_total, o placa ≥ carga ÷ f_total. Los números finos son del fabricante; la estructura, universal.</li>
+          <li>Selección honesta: carga ≤ placa × f_total, o placa ≥ carga ÷ f_total. El producto de factores es práctico pero puede contar dos veces fenómenos relacionados: los números finales, del catálogo del fabricante o la norma aplicable.</li>
         </ul>
       </div>
     </section>

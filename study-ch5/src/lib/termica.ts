@@ -119,3 +119,13 @@ export type TipoCarga = 'constante' | 'cuadratica' | 'potencia'
 /** Par resistente relativo al nominal de la carga, en el ARRANQUE (n ≈ 0). */
 export const parArranqueCarga = (tipo: TipoCarga): number =>
   tipo === 'constante' ? 1.0 : tipo === 'cuadratica' ? 0.15 : 0.4
+
+/**
+ * Pérdidas totales relativas a las nominales, separando componentes:
+ * SOLO el cobre sigue el cuadrado de la carga; hierro (V, f), mecánicas (ω)
+ * y auxiliares son ~constantes a velocidad y tensión fijas.
+ *   P(carga) = fCu·carga² + (1 − fCu)
+ * con fCu = fracción de cobre a plena carga (típico 0.5–0.7).
+ */
+export const perdidasTotales = (carga: number, fCu: number): number =>
+  fCu * carga * carga + (1 - fCu)

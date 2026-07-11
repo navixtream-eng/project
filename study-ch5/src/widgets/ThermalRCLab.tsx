@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { FlaskConical } from 'lucide-react'
-import { thermalCycle, thermalStep } from '../lib/termica'
+import { perdidasTotales, thermalCycle, thermalStep } from '../lib/termica'
 
 /**
  * Laboratorio — El circuito térmico R-C de la máquina.
@@ -12,11 +12,13 @@ export default function ThermalRCLab() {
   const [modoCiclo, setModoCiclo] = useState(false)
   const [carga, setCarga] = useState(100) // % de la nominal
   const [tau, setTau] = useState(40) // min
+  const [fcu, setFcu] = useState(60) // % de las pérdidas que son de cobre a plena carga
   const [tOn, setTOn] = useState(20) // ciclo: marcha [min]
   const [tOff, setTOff] = useState(20) // ciclo: parada [min]
 
-  // Pérdidas dominadas por I²R: crecen con el cuadrado de la carga
-  const perd = (carga / 100) ** 2
+  // SOLO el cobre sigue el cuadrado; hierro/mecánicas/auxiliares ~constantes
+  const perd = perdidasTotales(carga / 100, fcu / 100)
+  const perdCu = (fcu / 100) * (carga / 100) ** 2
   const tauCool = tau * 2.5 // autoventilado detenido: enfría ~2.5× más lento
 
   const datos = useMemo(() => {
@@ -69,6 +71,11 @@ export default function ThermalRCLab() {
           <input type="range" min={15} max={80} step={5} value={tau} onChange={(e) => setTau(Number(e.target.value))} className="w-28" />
           <span className="w-14 font-mono text-zinc-200">{tau} min</span>
         </label>
+        <label className="flex items-center gap-2 text-zinc-400" title="Fracción de las pérdidas nominales que son de cobre (I²R); el resto (hierro, mecánicas, auxiliares) no depende de la carga">
+          <span className="font-semibold text-pink-300">cobre/total</span>
+          <input type="range" min={40} max={80} step={5} value={fcu} onChange={(e) => setFcu(Number(e.target.value))} className="w-24" />
+          <span className="w-12 font-mono text-zinc-200">{fcu} %</span>
+        </label>
         {modoCiclo && (
           <>
             <label className="flex items-center gap-2 text-zinc-400">
@@ -119,8 +126,11 @@ export default function ThermalRCLab() {
 
       <div className="grid grid-cols-3 gap-2 px-3 pb-3">
         <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-2.5 py-2">
-          <p className="text-[10px] uppercase tracking-wide text-zinc-500">Pérdidas (∝ carga²)</p>
+          <p className="text-[10px] uppercase tracking-wide text-zinc-500">Pérdidas totales</p>
           <p className="font-mono text-sm font-semibold text-amber-300">{(perd * 100).toFixed(0)} %</p>
+          <p className="font-mono text-[9px] text-zinc-600">
+            Cu {`${(perdCu * 100).toFixed(0)}`} (∝I²) + fijas {`${(100 - fcu).toFixed(0)}`} (Fe, mec, aux)
+          </p>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-2.5 py-2">
           <p className="text-[10px] uppercase tracking-wide text-zinc-500">{modoCiclo ? 'θ pico del ciclo' : 'θ de equilibrio'}</p>
@@ -136,9 +146,11 @@ export default function ThermalRCLab() {
 
       <footer className="border-t border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-[11px] leading-relaxed text-zinc-400">
         <span className="font-semibold text-zinc-300">Experimentos guiados: </span>
-        (1) escalón al 120 %: las pérdidas suben al 144 % y el equilibrio TAMBIÉN — pero mira el
-        marcador: la máquina tarda ~τ·ln(1/(1−1/1.44)) en cruzar el límite: la sobrecarga corta es
-        legal, la sostenida no (ese es el fundamento del relé térmico y del factor de servicio);
+        (1) escalón al 120 %: SOLO el cobre sube al cuadrado (144 %); con 60 % de cobre las
+        pérdidas TOTALES suben a ~126 % (0.6·1.44 + 0.4) — mueve el deslizador cobre/total y nota
+        que el «1.2² = 1.44» del folclor solo vale si todo fuera cobre; aun así el equilibrio cruza
+        el límite y el marcador te dice cuándo: la sobrecarga corta es legal, la sostenida no (el
+        fundamento del relé térmico y del factor de servicio);
         (2) baja τ a 15 min (máquina pequeña) y repite: cruza mucho antes — las máquinas chicas
         perdonan menos; (3) modo ciclo con 20/20 min: la temperatura SIERRA entre dos niveles —
         si el pico toca el límite, el ciclo no es admisible aunque el promedio sí lo sea; (4) nota

@@ -40,7 +40,7 @@ export default function C12Section3() {
         <Formula
           latex="P_{eq} = \sqrt{\frac{\sum P_i^2\, t_i}{\sum t_{marcha} + k\sum t_{parada}}} \qquad (k \approx 0.3\text{–}0.5\ \text{autoventilado})"
           symbols={[
-            { sym: 'P_i^2 t_i', meaning: 'Las pérdidas dominantes son Joule (∝ P²): por eso el promedio correcto es cuadrático. Un pico corto pesa mucho más que su duración.' },
+            { sym: 'P_i^2 t_i', meaning: 'El promedio cuadrático supone que las pérdidas VARIABLES (Joule, ∝ P²) dominan sobre las fijas y que la refrigeración no cambia en marcha. Es el método estándar para motores de jaula en red fija — NO una fórmula universal: con hierro dominante, variador (ventilación ∝ velocidad) o ciclos largos, manda la simulación térmica o el fabricante.' },
             { sym: 'k', meaning: 'La pausa enfría MENOS de lo que dura (sin ventilador): contarla completa sería optimista. El factor exacto viene del fabricante; 0.4 es el típico docente.' },
             { sym: 'P_{eq} \\le P_{placa}', meaning: 'El criterio de selección para ciclos… CONDICIONADO a que el pico térmico no cruce el límite (verificar con la simulación R-C si el ciclo no es corto frente a τ).' },
           ]}

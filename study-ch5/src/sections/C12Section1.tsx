@@ -33,13 +33,13 @@ export default function C12Section1() {
 
       <ConceptBlock
         title="1.1 · La analogía R-C (y por qué funciona)"
-        idea="Las pérdidas P (cobre + hierro + mecánicas, Cap. 5.6) generan calor; la máquina lo almacena en su masa (capacitancia térmica C_th, J/K) y lo evacúa al ambiente a través de una resistencia térmica R_th (K/W) — carcasa, aletas, ventilador. El balance da EXACTAMENTE la ecuación del RC: la elevación θ sube exponencialmente hacia θ_ss = P·R_th con constante τ = R_th·C_th. Dos consecuencias de oro: (1) la temperatura FINAL solo depende de P·R_th — el tamaño no salva del equilibrio, solo lo retrasa; (2) la sobrecarga corta es legal: mientras θ no cruce el límite de clase, el cobre no sabe cuánto marcaba el amperímetro."
+        idea="Las pérdidas P generan calor; la máquina lo almacena en su masa (capacitancia térmica C_th, J/K) y lo evacúa al ambiente a través de una resistencia térmica R_th (K/W) — carcasa, aletas, ventilador. El balance da EXACTAMENTE la ecuación del RC: θ sube exponencialmente hacia θ_ss = P·R_th con constante τ = R_th·C_th. Y una precisión que evita un mito: P_total = P_cu(I²) + P_fe(V, f) + P_mec(ω) + P_aux — SOLO el cobre sigue el cuadrado de la carga; a tensión y velocidad fijas, hierro, mecánicas y auxiliares casi no se mueven. Cargar al 120 % sube el cobre un 44 %, pero las pérdidas totales típicamente un 25–30 % (según la fracción de cobre). Dos consecuencias de oro: (1) la temperatura FINAL solo depende de P·R_th — el tamaño no salva del equilibrio, solo lo retrasa; (2) la sobrecarga corta es legal: mientras θ no cruce el límite de clase, el cobre no sabe cuánto marcaba el amperímetro."
         analogy="Una tina con el desagüe medio abierto: el grifo son las pérdidas, el nivel es la temperatura, el desagüe es R_th. Abre más el grifo (sobrecarga) y el nivel sube hacia un equilibrio más alto — pero TARDA en llegar. Si cierras a tiempo, nunca se desborda: eso es una sobrecarga admisible."
       >
         <Formula
           latex="C_{th}\frac{d\theta}{dt} = P - \frac{\theta}{R_{th}} \;\Rightarrow\; \theta(t) = P R_{th}\left(1 - e^{-t/\tau}\right), \quad \tau = R_{th} C_{th}"
           symbols={[
-            { sym: '\\theta_{ss} = P R_{th}', meaning: 'La elevación de equilibrio. Con pérdidas ∝ carga², una sobrecarga del 20 % sube θ_ss un 44 % — la relación cuadrática es la que muerde.' },
+            { sym: '\\theta_{ss} = P R_{th}', meaning: 'La elevación de equilibrio, con P = P_cu(I²) + P_fe + P_mec + P_aux. El cuadrado muerde solo en la parte de cobre: al 120 % de carga, +44 % de cobre pero ~+26 % de pérdidas totales con el reparto típico (60/40) — el laboratorio separa ambas.' },
             { sym: '\\tau = R_{th} C_{th}', meaning: 'De 15 min (motores chicos) a horas (grandes). Es el «perdón» de la máquina: cuánto tiempo tolera lo que en régimen la mataría — y la base de las curvas de los relés térmicos (49).' },
             { sym: 'R_{th}', meaning: 'Cae con la ventilación: parado y autoventilado, R_th sube (τ de enfriamiento 2–3× mayor). Ventilación forzada independiente = R_th constante a toda velocidad (clave con variadores a baja velocidad).' },
           ]}
@@ -136,7 +136,7 @@ export default function C12Section1() {
           Síntesis Feynman · C12 Sección 1
         </p>
         <ul className="list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-zinc-300">
-          <li>Máquina = RC térmico: θ_ss = P·R_th (la ventilación fija el régimen), τ = R_th·C_th (la masa fija los tiempos). Pérdidas ∝ carga²: el 120 % de carga es el 144 % de calor.</li>
+          <li>Máquina = RC térmico: θ_ss = P·R_th (la ventilación fija el régimen), τ = R_th·C_th (la masa fija los tiempos). P_total = cobre(∝I²) + fijas (hierro, mecánicas, auxiliares): el 120 % de carga es +44 % de COBRE, no de todo.</li>
           <li>La sobrecarga corta frente a τ es legal; la sostenida cruza el límite de clase. El relé térmico 49 y el factor de servicio viven de esta distinción.</li>
           <li>Parado y autoventilado se enfría 2–3× más lento — los arranques frecuentes y los variadores a baja velocidad castigan por ahí.</li>
         </ul>

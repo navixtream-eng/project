@@ -40,7 +40,7 @@ export default function C12Section2() {
           symbols={[
             { sym: 'L_0', meaning: 'Vida a la temperatura de clase (≈ 20 000 h de referencia clásica — el número exacto varía por material y norma; la ESTRUCTURA exponencial no).' },
             { sym: '\\theta_{hot}', meaning: 'El punto MÁS caliente del devanado (no el promedio): ranura profunda, cabeza de bobina mal ventilada. Los sensores PT100 se ponen ahí por esto.' },
-            { sym: '2^{\\Delta/10}', meaning: 'La regla del 10: −10 °C = ×2 vida; +20 °C = ÷4. Es la conversión universal entre «calor» y «años» — y el argumento económico de todo derrateo.' },
+            { sym: '2^{\\Delta/10}', meaning: 'La regla del 10: −10 °C = ×2 vida; +20 °C = ÷4. PRECAUCIÓN: es una aproximación de ingeniería de la ley de Arrhenius, no una ley exacta — el intervalo de mitad de vida real varía entre ~8 y 12 °C según el sistema de aislamiento, y la regla aplica a la temperatura del PUNTO CALIENTE. Para diseño fino: las curvas de envejecimiento del sistema concreto (IEC 60034-18).' },
           ]}
         />
       </ConceptBlock>

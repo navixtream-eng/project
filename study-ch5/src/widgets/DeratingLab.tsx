@@ -101,8 +101,11 @@ export default function DeratingLab() {
       <p className="mx-4 mb-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-2.5 text-[10px] leading-relaxed text-zinc-500">
         <strong className="text-zinc-400">Aproximaciones declaradas:</strong> las cuatro reglas son
         ajustes típicos de catálogo IEC y de las curvas NEMA MG1 — cada fabricante publica las
-        suyas y ESAS mandan. La estructura del cálculo (factores multiplicativos sobre la placa) sí
-        es universal; los números exactos, no.
+        suyas y ESAS mandan. Además, multiplicar factores independientes puede CONTAR DOS VECES
+        fenómenos relacionados (p. ej., desbalance y armónicos calientan el mismo rotor; altitud y
+        temperatura interactúan en el mismo aire): el producto es una estimación práctica y algo
+        conservadora, no una superposición exacta. La estructura del cálculo es universal; los
+        números finales salen del catálogo o de la norma aplicable.
       </p>
 
       <footer className="border-t border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-[11px] leading-relaxed text-zinc-400">
