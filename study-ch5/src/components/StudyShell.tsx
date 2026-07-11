@@ -57,8 +57,13 @@ import C10Section2 from '../sections/C10Section2'
 import C10Section3 from '../sections/C10Section3'
 import C10Section4 from '../sections/C10Section4'
 import C10Section5 from '../sections/C10Section5'
+import C11Section1 from '../sections/C11Section1'
+import C11Section2 from '../sections/C11Section2'
+import C11Section3 from '../sections/C11Section3'
+import C11Section4 from '../sections/C11Section4'
+import C11Section5 from '../sections/C11Section5'
 
-export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
 
 /** Acentos por capítulo: …, naranja (CC), cian (dinámica CC) */
 export const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: string; num: string; boxOn: string; lbl: string }> = {
@@ -72,6 +77,7 @@ export const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string
   8: { tab: 'text-fuchsia-300', btnOn: 'border-fuchsia-500/50 bg-fuchsia-500/10', btnTxt: 'text-fuchsia-300', box: 'border-fuchsia-500/30', num: 'text-fuchsia-400', boxOn: 'border-fuchsia-500/40 bg-fuchsia-500/5', lbl: 'text-fuchsia-400/70' },
   9: { tab: 'text-orange-300', btnOn: 'border-orange-500/50 bg-orange-500/10', btnTxt: 'text-orange-300', box: 'border-orange-500/30', num: 'text-orange-400', boxOn: 'border-orange-500/40 bg-orange-500/5', lbl: 'text-orange-400/70' },
   10: { tab: 'text-cyan-300', btnOn: 'border-cyan-500/50 bg-cyan-500/10', btnTxt: 'text-cyan-300', box: 'border-cyan-500/30', num: 'text-cyan-400', boxOn: 'border-cyan-500/40 bg-cyan-500/5', lbl: 'text-cyan-400/70' },
+  11: { tab: 'text-lime-300', btnOn: 'border-lime-500/50 bg-lime-500/10', btnTxt: 'text-lime-300', box: 'border-lime-500/30', num: 'text-lime-400', boxOn: 'border-lime-500/40 bg-lime-500/5', lbl: 'text-lime-400/70' },
 }
 
 export interface SectionDef {
@@ -465,6 +471,51 @@ export const SECTIONS: SectionDef[] = [
     items: ['Lazo cerrado PI y error cero', 'Lazo interno de corriente (limita par)', 'Lazo externo de velocidad (rampa)', 'Problema 46: control en cascada'],
     component: C10Section5,
   },
+  {
+    chapter: 11,
+    num: 1,
+    prefix: 'c11s1-',
+    short: 'Fortescue',
+    title: 'Componentes simétricas',
+    items: ['El operador a y las tres secuencias', 'V₂ calienta, V₀ busca el neutro', 'Problema 50: descomposición'],
+    component: C11Section1,
+  },
+  {
+    chapter: 11,
+    num: 2,
+    prefix: 'c11s2-',
+    short: 'Redes de secuencia',
+    title: 'Redes e impedancias de secuencia',
+    items: ['Z₁ ≠ Z₂ ≠ Z₀ en máquinas', 'El neutro entra ×3 (3Zn)', 'Sólido / reactor / aislado', 'Problema 51: diseñar el reactor'],
+    component: C11Section2,
+  },
+  {
+    chapter: 11,
+    num: 3,
+    prefix: 'c11s3-',
+    short: 'Trafo en la red cero',
+    title: 'El transformador en las redes',
+    items: ['Yg pasa · Δ atrapa · Y bloquea', 'Δ–Yg parte zonas de tierra', 'Problema 52: falla tras el banco'],
+    component: C11Section3,
+  },
+  {
+    chapter: 11,
+    num: 4,
+    prefix: 'c11s4-',
+    short: 'Catálogo de fallas',
+    title: 'SLG, L-L, LLG y fallas serie',
+    items: ['Serie / paralelo / divisor', 'Zf y Zn: fallas con impedancia', 'Fase abierta y fallas simultáneas', 'Problema 53: LLG completa'],
+    component: C11Section4,
+  },
+  {
+    chapter: 11,
+    num: 5,
+    prefix: 'c11s5-',
+    short: 'Protección de tierra',
+    title: 'El residual 3I₀ y la coordinación',
+    items: ['51N: medir lo que solo la falla produce', 'El flujo integral de ajuste', 'Problema 54: la falla que el 51 no ve'],
+    component: C11Section5,
+  },
 ]
 
 export const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
@@ -478,6 +529,7 @@ export const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
   { id: 8, label: 'Capítulo 8', sub: 'Dinámica y control' },
   { id: 9, label: 'Capítulo 9', sub: 'Máquinas de CC' },
   { id: 10, label: 'Capítulo 10', sub: 'Dinámica de CC' },
+  { id: 11, label: 'Capítulo 11', sub: 'Fallas desbalanceadas' },
 ]
 
 const ACTIVE_KEY = 'fku-ch5-active-section'

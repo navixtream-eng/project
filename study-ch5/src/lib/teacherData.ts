@@ -339,6 +339,41 @@ export const TEACHING_NOTES: Record<string, TeachingNote> = {
     discusion: '¿Por qué el término integral garantiza velocidad exacta pese a la carga?',
     minutos: 55,
   },
+  'c11s1-': {
+    objetivos: ['Aplicar la transformación de Fortescue (operador a) en ambos sentidos', 'Interpretar V₁/V₂/V₀ y el factor de desequilibrio'],
+    errorComun: 'Creer que un sistema balanceado «tiene un poco de cada secuencia»: 1+a+a² = 0 aniquila la negativa y la cero.',
+    demo: 'Laboratorio de Fortescue: bajar |Vb| al 70 % y ver aparecer negativa Y cero a la vez.',
+    discusion: '¿Por qué un 5 % de V₂ produce ~25 % de corriente negativa en un motor (Z₂ ≈ Z de arranque)?',
+    minutos: 55,
+  },
+  'c11s2-': {
+    objetivos: ['Construir las tres redes de un generador (fuente solo en positiva)', 'Dimensionar el aterrizamiento (3Zn) y comparar sólido/reactor/aislado'],
+    errorComun: 'Olvidar el factor 3 del neutro: por él regresan las TRES corrientes de secuencia cero (caída 3·Zn·I₀).',
+    demo: 'Laboratorio de redes: subir el reactor hasta que la SLG iguale a la trifásica — diseñar en vivo.',
+    discusion: 'Neutro aislado: ¿por qué la primera falla «gratis» es una trampa (√3 en fases sanas, falla latente)?',
+    minutos: 60,
+  },
+  'c11s3-': {
+    objetivos: ['Aplicar las reglas Yg/Δ/Y en la red de secuencia cero', 'Construir la red cero de un sistema con transformadores'],
+    errorComun: 'Sumar el X₀ de TODO el sistema: la delta desconecta lo que está detrás de ella — primero topología, después impedancias.',
+    demo: 'Laboratorio del trafo: recorrer los cinco casos clásicos y justificar cada circuito abierto/derivación.',
+    discusion: '¿Por qué al Yg–Yg se le añade un terciario en delta?',
+    minutos: 55,
+  },
+  'c11s4-': {
+    objetivos: ['Resolver SLG, L-L y LLG conectando redes (serie/paralelo/divisor) con Zf y Zn', 'Reconocer fallas serie (fase abierta) y su I₂'],
+    errorComun: 'Memorizar fórmulas sueltas en vez de la CONEXIÓN de redes; y olvidar el ×3 de Zf/Zn en los caminos de tierra.',
+    demo: 'Conmutador de fallas: mismos parámetros, cuatro tipos — la conexión es la fórmula. Autochequeo: la fase sana da cero.',
+    discusion: '¿Por qué la pérdida de fase de un motor es una emergencia térmica sin ser un cortocircuito?',
+    minutos: 70,
+  },
+  'c11s5-': {
+    objetivos: ['Explicar el residual 3I₀ y la sensibilidad del 51N', 'Ejecutar el flujo integral de ajuste y coordinación fase/tierra'],
+    errorComun: 'Verificar la protección solo con la falla franca: la prueba decisiva es la falla MÍNIMA (resistiva, lejana).',
+    demo: 'Laboratorio 51/51N: la SLG resistiva que el relé de fase no ve y el residual caza en medio segundo; la L-L con residual cero.',
+    discusion: '¿Por qué elegir la SEÑAL correcta (residual) vale más que un relé más sensible?',
+    minutos: 65,
+  },
 }
 
 // ---------------------------------------------------------------------------

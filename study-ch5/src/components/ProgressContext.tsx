@@ -167,6 +167,21 @@ export const ALL_CHECK_IDS = [
   'c10s5-check-integral',
   'c10s5-check-cascada',
   'c10s5-problema-drive',
+  'c11s1-check-balance',
+  'c11s1-check-negativa',
+  'c11s1-problema-descomposicion',
+  'c11s2-check-fuente',
+  'c11s2-check-aislado',
+  'c11s2-problema-reactor',
+  'c11s3-check-delta',
+  'c11s3-check-ygyg',
+  'c11s3-problema-trafo',
+  'c11s4-check-conexion',
+  'c11s4-check-serie',
+  'c11s4-problema-llg',
+  'c11s5-check-residual',
+  'c11s5-check-sensibilidad',
+  'c11s5-problema-51n',
 ] as const
 
 export type CheckId = (typeof ALL_CHECK_IDS)[number]
