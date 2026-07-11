@@ -5,7 +5,10 @@ import SolvedProblem from '../components/SolvedProblem'
 import ParallelSyncLab from '../widgets/ParallelSyncLab'
 import DroopShareLab from '../widgets/DroopShareLab'
 import ReactiveShareLab from '../widgets/ReactiveShareLab'
+import SalaControlLab from '../widgets/SalaControlLab'
 import { droopSolve, fmt, reactiveShare, toDeg } from '../lib/machine'
+
+const RUTA = ['Preparar', 'Sincronizar', 'Cerrar', 'Cargar MW', 'Repartir MVAr', 'Vigilar límites', 'Desconectar']
 
 /** Capítulo 5, Sección 7 — Generadores sincrónicos interconectados (§5-8/5-9 FKU). */
 export default function Section7() {
@@ -31,6 +34,21 @@ export default function Section7() {
           nota. Aquí aprendes el ritual para que una máquina nueva ENTRE al coro sin desafinar
           (sincronización), y los dos únicos mandos con los que después se reparte el trabajo:
           el gobernador (los watts) y la excitación (los vars).
+        </p>
+        {/* Ruta de la maniobra: el mapa de toda la sección */}
+        <div className="mt-3 flex flex-wrap items-center gap-1">
+          {RUTA.map((paso, i) => (
+            <span key={paso} className="flex items-center gap-1">
+              <span className="rounded-md border border-sky-800/60 bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-300">
+                {i + 1}. {paso}
+              </span>
+              {i < RUTA.length - 1 && <span className="text-[10px] text-zinc-600">→</span>}
+            </span>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[11px] text-zinc-500">
+          Esta ruta es el índice de la sección: los laboratorios 1–3 entrenan cada tramo por
+          separado y la «Sala de control» final te hace ejecutarla completa, como en una central.
         </p>
       </header>
 
@@ -250,6 +268,131 @@ export default function Section7() {
         takeaway="Excitar más = inclinar el fasor hacia lo reactivo, nunca hacia lo activo. El diagrama fasorial de la Fig. 5-30 se resuelve entero con una sola invariante: Eaf·sen δ = P·Xs/Vt."
       />
 
+      <ConceptBlock
+        title="7.4 · Dos escenarios, los mismos mandos, efectos distintos"
+        idea="Contra una BARRA INFINITA (la red gigante), f y Vt son inamovibles: tu gobernador solo cambia P y tu excitación solo cambia Q — la red absorbe todo lo demás. En una RED AISLADA (dos generadores solos con su carga), no hay nadie más: la frecuencia ES el balance Pm–PL y el voltaje ES el balance de excitación contra los reactivos de la carga. El mismo mando que en la red grande «solo movía tu P» ahora mueve la frecuencia de todos. Sobre esto se montan los niveles de control: la regulación PRIMARIA (el estatismo, actúa en segundos, reparte pero deja caer f), el control SECUNDARIO o AGC (minutos, desplaza las consignas en bloque para devolver los 60 Hz) y el AVR sobre cada campo (sostiene Vt y reparte los kVAR)."
+        analogy="Pedalear en un pelotón enorme vs. en una bicicleta tándem de dos. En el pelotón (barra infinita) tu esfuerzo no cambia la velocidad del grupo: solo decide cuánto arrastras tú. En el tándem (isla), cada golpe de pedal se siente en el velocímetro: la velocidad es de ambos y la fabrican ambos."
+      >
+        <Formula
+          latex="\underbrace{f = f_0 - kP}_{\text{primaria (s)}} \qquad \underbrace{f_0 \leftarrow f_0 + \Delta}_{\text{AGC (min): restaura 60 Hz}} \qquad \underbrace{E_{af} \leftarrow \text{AVR}}_{\text{tensión y kVAR}}"
+          symbols={[
+            { sym: 'f = f_0 - kP', meaning: 'Regulación primaria: automática e instantánea. REPARTE los cambios de carga entre las máquinas, pero deja la frecuencia desviada — el estatismo es un reparto, no un termostato.' },
+            { sym: 'f_0 + \\Delta', meaning: 'Control secundario (AGC): mueve TODAS las consignas en bloque. Cambia la frecuencia sin alterar el reparto (la diferencia de setpoints no se toca).' },
+            { sym: '\\text{AVR}', meaning: 'Regulador automático de voltaje: el lazo de excitación que sostiene Vt. Su «AGC reactivo» es el reparto de kVAR entre unidades (compensación de la Fig. 5-30, automatizada).' },
+          ]}
+        />
+      </ConceptBlock>
+
+      <ConceptBlock
+        title="7.5 · ¿Cuándo deja de ser segura la maniobra? Los límites"
+        idea="Repartir carga no es solo aritmética de rectas: cada punto de operación debe caber dentro de la CARTA DE CAPACIDAD (Cap. 5.4). Límite de armadura: S = √(P²+Q²) ≤ Smax (el cobre del estator se calienta con la corriente TOTAL, activa o reactiva). Límite de campo (OEL): sobreexcitar para acaparar kVAR calienta el rotor. Límite de subexcitación (UEL): absorber demasiados kVAR acerca la máquina a la pérdida de sincronismo — con Eaf pequeña, Eaf·Vt/Xs puede quedar por debajo de la P que exige el gobernador y la máquina se desliza del «resorte» magnético (relé 78). Y el límite de POTENCIA INVERSA (relé 32): si descargas de más un generador, la red lo arrastra como motor — su turbina no está hecha para eso."
+        analogy="La carta de capacidad es el «sobre de vuelo» de un avión: puedes volar en cualquier punto interior, pero cada frontera es un modo distinto de romper la máquina — velocidad máxima (armadura), techo (campo), pérdida de sustentación (estabilidad). El buen operador no memoriza el borde: DESPACHA lejos de él."
+      >
+        <Formula
+          latex="P^2 + Q^2 \le S_{max}^2 \qquad Q \ge Q_{UEL}(P) \qquad P > 0\;(\text{relé }32) \qquad \sin\delta = \frac{P X_s}{E_{af} V_t} < 1"
+          symbols={[
+            { sym: 'S_{max}', meaning: 'Corriente máxima de armadura × Vt. Es un CÍRCULO en el plano P–Q: puedes gastar tu corriente en watts o en vars, pero no en ambos a tope.' },
+            { sym: 'Q_{UEL}(P)', meaning: 'Frontera de subexcitación: mientras más P entregas, menos kVAR puedes absorber. La fija el margen de estabilidad y el calentamiento en los extremos del estator.' },
+            { sym: '\\sin\\delta < 1', meaning: 'La condición de existencia del sincronismo: si bajas Eaf (o sube P) hasta que P·Xs > Eaf·Vt, NO existe ángulo que transmita esa potencia — la máquina se desliza y el relé 78 la saca.' },
+          ]}
+        />
+      </ConceptBlock>
+
+      <SalaControlLab />
+
+      <FeynmanCheck
+        id="s7-check-isla"
+        question="En la sala de control notas que la frecuencia está clavada en 60.00 Hz sin AGC, hagas lo que hagas con un gobernador. ¿Qué concluyes?"
+        options={[
+          {
+            label: 'El sistema está en modo red aislada y perfectamente balanceado.',
+            feedback:
+              'En una isla el balance perfecto es un instante, no un estado: cualquier movimiento de TU gobernador cambiaría Pm y movería f. Si f no responde a tus mandos, no estás solo en la red.',
+          },
+          {
+            label: 'Estás conectado a una barra infinita (o a una red tan grande que tu máquina no puede moverle la frecuencia): tu gobernador solo decide TU potencia.',
+            correct: true,
+            feedback:
+              'Exacto. Es el diagnóstico operativo clave: f insensible a tus mandos = red domina. El mismo razonamiento aplica al voltaje con la excitación. En isla, en cambio, cada consigna tuya se siente en f y en Vt — mismo tablero, física distinta.',
+          },
+          {
+            label: 'El AGC de tu planta está activado aunque el selector diga lo contrario.',
+            feedback:
+              'Un AGC corrige en decenas de segundos, no instantáneamente: verías a f desviarse y REGRESAR (y a las consignas moverse solas). Una f que jamás se inmuta señala que la fija alguien mucho más grande que tú.',
+          },
+        ]}
+      />
+
+      <FeynmanCheck
+        id="s7-check-diagnostico"
+        question="Diagnóstico de guardia: la red aislada opera con G₁ y G₂ en paralelo. Síntomas: tensión de barra BAJA (0.93 pu), frecuencia normal (60.0 Hz), y G₂ absorbiendo MVAr (Q₂ < 0) mientras G₁ está cerca de su límite de campo. ¿Cuál es la acción correcta?"
+        options={[
+          {
+            label: 'Subir los gobernadores de ambas máquinas para levantar la barra.',
+            feedback:
+              'La frecuencia está BIEN — los gobernadores no tienen nada que corregir (y subirlos la sacaría de 60 Hz). El síntoma es de tensión/reactivos: es un problema del lazo de EXCITACIÓN, no del de potencia.',
+          },
+          {
+            label: 'Subir la excitación de G₂: aporta los kVAR que hoy absorbe, alivia el campo de G₁ y levanta la tensión — un solo mando corrige los tres síntomas.',
+            correct: true,
+            feedback:
+              'Exacto. Q₂ < 0 con V baja delata a G₂ subexcitado: no solo no ayuda — le ROBA reactivos a G₁, que por eso roza su OEL. Subir If₂ ataca la causa: G₂ pasa a aportar kVAR, G₁ se descarga de campo y Vt sube. Frecuencia: intacta, porque no tocaste ningún gobernador.',
+          },
+          {
+            label: 'Abrir el interruptor de G₂: si absorbe reactivos, está estorbando.',
+            feedback:
+              'G₂ está entregando sus MW — sacarlo provocaría un golpe de carga sobre G₁ (f caería) y perderías su capacidad reactiva justo cuando falta tensión. Absorber kVAR no es falla: es un ajuste de excitación mal hecho, y se corrige con la perilla, no con el interruptor.',
+          },
+        ]}
+      />
+
+      <SolvedProblem
+        id="s7-problema-integrador"
+        numero="49"
+        title="La maniobra completa: sincronizar, cargar, repartir y retirar"
+        statement={
+          <>
+            En una red aislada, G₁ (k = 0.3 Hz/MW, gobernador en 61.8 Hz) alimenta solo una carga de{' '}
+            <strong>6 MW, fp 0.83 atraso (4 MVAr)</strong> a 60.0 Hz y Vt = 1.0 pu. Se quiere
+            incorporar G₂ (idéntico, Xₛ = 0.8 pu, base 10 MVA), pasarle la mitad de la carga (MW y
+            MVAr) y finalmente <strong>retirar G₁ de servicio</strong>. Determine:{' '}
+            <strong>(a)</strong> la consigna del gobernador de G₂ para sincronizar sin choque;{' '}
+            <strong>(b)</strong> las consignas finales de ambos gobernadores para P₁ = P₂ = 3 MW a
+            60.0 Hz; <strong>(c)</strong> la Eaf de cada máquina cuando comparten 2 MVAr cada una
+            (use Q ≈ Vt(Eaf−Vt)/Xₛ); <strong>(d)</strong> la secuencia segura para retirar G₁ y qué
+            relé actúa si se hace mal.
+          </>
+        }
+        steps={[
+          {
+            title: '(a) Sincronizar: entrar existiendo sin empujar',
+            why: 'Para que G₂ cierre sin tomar ni soltar carga, su recta debe pasar por el punto de operación actual: a P = 0, su frecuencia en vacío debe ser LA frecuencia de barra.',
+            work: `f_{0,2} = f_{barra} = 60.0\\ \\text{Hz} \\qquad (P_2 = \\tfrac{60.0-60.0}{0.3} = 0\\ \\text{MW al cierre})`,
+            note: 'Y su excitación debe dar |V₂| = Vt = 1.0 pu. Cerrar con f₀ más alta habría inyectado potencia de golpe; más baja, la habría absorbido (¡motorización al primer segundo!).',
+          },
+          {
+            title: '(b) Cargar MW: mover los DOS gobernadores en tijera',
+            why: 'P₂ = 3 MW exige f₀,₂ = 60 + 0.3·3 = 60.9. Pero si solo subes G₂, la frecuencia del sistema sube; G₁ debe bajar de 61.8 a 60.9 para que a 60.0 Hz entregue exactamente 3 MW.',
+            work: `f_{0,1} = 60 + 0.3(3) = 60.9\\ \\text{Hz} \\qquad f_{0,2} = 60 + 0.3(3) = 60.9\\ \\text{Hz}`,
+            note: 'Verificación con el estatismo: f = (60.9+60.9−0.3·6)/2 = 60.0 Hz ✓. Consignas iguales → reparto igual: la simetría del despacho está en los setpoints, no en las máquinas.',
+          },
+          {
+            title: '(c) Repartir MVAr: las excitaciones',
+            why: 'Con Q ≈ Vt(Eaf−Vt)/Xₛ (en pu), cada máquina necesita Q = 0.2 pu (2 MVAr en base 10 MVA).',
+            work: `E_{af} = V_t + \\frac{Q_{pu} X_s}{V_t} = 1 + (0.2)(0.8) = 1.16\\ \\text{pu} \\;\\;(\\text{ambas})`,
+            note: 'Si una quedara en 1.0 y la otra en 1.32, los MW seguirían 3–3 pero una cargaría los 4 MVAr sola: misma potencia activa, más corriente y más calentamiento — el reparto reactivo también se diseña.',
+          },
+          {
+            title: '(d) Retirar G₁: descargar ANTES de abrir',
+            why: 'Se baja f₀,₁ gradualmente: G₁ suelta MW que G₂ recoge (su recta no se movió, así que f cae un poco — el AGC o un retoque a f₀,₂ la sostiene). Con P₁ ≈ 0 y Q₁ ≈ 0 (bajando también If₁), abrir 52-G1 es un no-evento.',
+            work: `f_{0,1} \\to 60.0 \\Rightarrow P_1 \\to 0 \\qquad f_{0,2} \\to 60 + 0.3(6) = 61.8\\ \\text{Hz} \\Rightarrow P_2 = 6\\ \\text{MW},\\; f = 60.0`,
+            note: 'Si en vez de descargar se baja f₀,₁ por DEBAJO de la frecuencia de barra, P₁ se hace negativa: la red arrastra a G₁ como motor y el relé 32 (potencia inversa) lo dispara — la turbina de vapor no tolera girar «empujada» (sobrecalentamiento de álabes).',
+          },
+        ]}
+        answer={`\\text{(a)}\\ f_{0,2} = 60.0\\ \\text{Hz},\\ |V_2| = V_t \\quad \\text{(b)}\\ f_{0,1} = f_{0,2} = 60.9\\ \\text{Hz} \\quad \\text{(c)}\\ E_{af} = 1.16\\ \\text{pu} \\quad \\text{(d)}\\ P_1 \\to 0,\\ \\text{luego abrir}`}
+        takeaway="Toda la sección en una maniobra: sincronizar es igualar (f, V, fase), cargar es mover setpoints en tijera, repartir vars es igualar excitaciones, y retirar es el sincronizar al revés — descargar hasta que abrir no sea un evento. Ejecútala en la Sala de control."
+      />
+
       <div className="my-8 rounded-xl border border-zinc-700 bg-zinc-900/70 p-4">
         <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
           Síntesis Feynman · Sección 7
@@ -259,6 +402,8 @@ export default function Section7() {
           <li>Los watts se reparten con los GOBERNADORES: cada máquina impulsora impone su recta <InlineMath latex="f = f_{\text{vacío}} - kP" /> y la frecuencia común es donde las rectas suman la carga (Fig. 5-29). Suma de setpoints → f; diferencia → reparto.</li>
           <li>Los vars se reparten con la EXCITACIÓN: subir If₁ y bajar If₂ mueve kVAR del 2 al 1 sin tocar un solo watt — las puntas de los Êaf viajan por la recta <InlineMath latex="E_{af}\sin\delta = \text{cte}" /> (Fig. 5-30).</li>
           <li>Manual del operador (§5-9): P↔f con gobernadores y AGC; Q↔V con reguladores de voltaje sobre los campos. Dos lazos casi independientes — por eso una red con miles de máquinas es gobernable.</li>
+          <li>Mismos mandos, dos escenarios: contra barra infinita solo mueves TU P y TU Q; en red aislada fabricas la f y la V de todos. Jerarquía: primaria (estatismo, s) → secundaria (AGC, min) → AVR (tensión/kVAR).</li>
+          <li>Toda maniobra vive dentro de la carta de capacidad: armadura (S ≤ Smax), campo (OEL), subexcitación (UEL/estabilidad, sen δ &lt; 1) y potencia inversa (relé 32). Repartir bien también es no acercarse a los bordes.</li>
         </ul>
       </div>
     </section>

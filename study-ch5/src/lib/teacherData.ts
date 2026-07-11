@@ -158,11 +158,11 @@ export const TEACHING_NOTES: Record<string, TeachingNote> = {
     minutos: 45,
   },
   's7-': {
-    objetivos: ['Ejecutar el procedimiento de sincronización y justificar el cierre con ΔV ≈ 0', 'Repartir potencia activa con estatismo de gobernadores (Fig. 5-29)', 'Repartir reactivos con la excitación manteniendo Eaf·senδ constante (Fig. 5-30)'],
+    objetivos: ['Ejecutar el procedimiento de sincronización (lámparas, sincroscopio, relé 25) y cuantificar el cierre fuera de fase', 'Repartir P con estatismo y Q con excitación distinguiendo barra infinita vs red aislada', 'Operar dentro de la carta de capacidad (OEL, UEL, 32, 78) y completar la misión de la Sala de control'],
     errorComun: 'Creer que la excitación mueve los watts: subir If solo redistribuye kVAR y voltaje; los MW los fijan las máquinas impulsoras.',
-    demo: 'Sincroscopio del laboratorio: cerrar S₂ a propósito en las 6 y discutir la corriente de choque; luego la maniobra de la Fig. 5-29 (subir un gobernador, bajar el otro).',
-    discusion: '¿Por qué la red necesita que las rectas de los gobernadores CAIGAN (estatismo) en lugar de ser planas?',
-    minutos: 60,
+    demo: 'Sala de control: la misión completa en vivo (sincronizar G₂, cargar en tijera, igualar fp, retirar G₁); provocar el relé 32 descargando de más y el 78 bajando excitación con P alta.',
+    discusion: '¿Por qué el estatismo REPARTE pero no RESTAURA la frecuencia, y por qué el AGC no debe actuar en segundos?',
+    minutos: 90,
   },
   'c6s1-': {
     objetivos: ['Aplicar el teorema de conservación del flujo λ(0⁺)=λ(0⁻)', 'Introducir la transformación d-q-0 y el modelo E′ tras X′d'],

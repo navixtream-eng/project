@@ -235,7 +235,7 @@ export const SECTIONS: SectionDef[] = [
     prefix: 's7-',
     short: 'En paralelo',
     title: 'Generadores en paralelo',
-    items: ['Sincronización y sincroscopio', 'Gobernadores: f y los MW (Fig. 5-29)', 'Excitación: V y los kVAR (Fig. 5-30)', 'Problemas 47 y 48: estatismo y reactivos'],
+    items: ['Tablero de sincronización y lámparas', 'Gobernadores: f y los MW (Fig. 5-29)', 'Excitación: V y los kVAR (Fig. 5-30)', 'Barra infinita vs red aislada · límites y protecciones', 'Sala de control: misión integradora', 'Problemas 47–49'],
     component: Section7,
   },
   {
