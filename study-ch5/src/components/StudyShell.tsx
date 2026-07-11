@@ -64,8 +64,13 @@ import C11Section4 from '../sections/C11Section4'
 import C11Section5 from '../sections/C11Section5'
 import C11Section6 from '../sections/C11Section6'
 import C11Section7 from '../sections/C11Section7'
+import C12Section1 from '../sections/C12Section1'
+import C12Section2 from '../sections/C12Section2'
+import C12Section3 from '../sections/C12Section3'
+import C12Section4 from '../sections/C12Section4'
+import C12Section5 from '../sections/C12Section5'
 
-export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
+export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
 
 /** Acentos por capítulo: …, naranja (CC), cian (dinámica CC) */
 export const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string; box: string; num: string; boxOn: string; lbl: string }> = {
@@ -80,6 +85,7 @@ export const ACC: Record<ChapterId, { tab: string; btnOn: string; btnTxt: string
   9: { tab: 'text-orange-300', btnOn: 'border-orange-500/50 bg-orange-500/10', btnTxt: 'text-orange-300', box: 'border-orange-500/30', num: 'text-orange-400', boxOn: 'border-orange-500/40 bg-orange-500/5', lbl: 'text-orange-400/70' },
   10: { tab: 'text-cyan-300', btnOn: 'border-cyan-500/50 bg-cyan-500/10', btnTxt: 'text-cyan-300', box: 'border-cyan-500/30', num: 'text-cyan-400', boxOn: 'border-cyan-500/40 bg-cyan-500/5', lbl: 'text-cyan-400/70' },
   11: { tab: 'text-lime-300', btnOn: 'border-lime-500/50 bg-lime-500/10', btnTxt: 'text-lime-300', box: 'border-lime-500/30', num: 'text-lime-400', boxOn: 'border-lime-500/40 bg-lime-500/5', lbl: 'text-lime-400/70' },
+  12: { tab: 'text-indigo-300', btnOn: 'border-indigo-500/50 bg-indigo-500/10', btnTxt: 'text-indigo-300', box: 'border-indigo-500/30', num: 'text-indigo-400', boxOn: 'border-indigo-500/40 bg-indigo-500/5', lbl: 'text-indigo-400/70' },
 }
 
 export interface SectionDef {
@@ -536,6 +542,51 @@ export const SECTIONS: SectionDef[] = [
     items: ['±30° del Dyn1 sobre las secuencias', 'La SLG que se vuelve «bifásica»', 'Fallas evolutivas y cross-country', 'Problemas 57 y 58'],
     component: C11Section7,
   },
+  {
+    chapter: 12,
+    num: 1,
+    prefix: 'c12s1-',
+    short: 'Circuito térmico',
+    title: 'El condensador térmico R-C',
+    items: ['θ_ss = P·R_th y τ = R·C', 'Sobrecarga corta vs sostenida', 'Problema 59: calentamiento con números'],
+    component: C12Section1,
+  },
+  {
+    chapter: 12,
+    num: 2,
+    prefix: 'c12s2-',
+    short: 'Aislamiento y vida',
+    title: 'Clases térmicas y vida útil',
+    items: ['Clases A/B/F/H y el punto caliente', 'Montsinger: ±10 °C = ×2/÷2 vida', 'Problema 60: la vida en tres escenarios'],
+    component: C12Section2,
+  },
+  {
+    chapter: 12,
+    num: 3,
+    prefix: 'c12s3-',
+    short: 'Ciclos de servicio',
+    title: 'Tipos de servicio y P equivalente',
+    items: ['S1 / S2 / S3', 'P_eq = RMS del perfil (∝ P²)', 'Validez: ciclo corto frente a τ', 'Problema 61: del ciclo al tamaño'],
+    component: C12Section3,
+  },
+  {
+    chapter: 12,
+    num: 4,
+    prefix: 'c12s4-',
+    short: 'Derrateo',
+    title: 'Derrateo: placa vs instalación',
+    items: ['Altitud · ambiente · desbalance · armónicos', 'La cascada multiplicativa', 'Problema 62: derrateo combinado'],
+    component: C12Section4,
+  },
+  {
+    chapter: 12,
+    num: 5,
+    prefix: 'c12s5-',
+    short: 'Selección',
+    title: 'El flujo de selección completo',
+    items: ['Tipo de carga → potencia → derrateo → catálogo', 'Verificar el arranque (par ∝ V²)', 'Problema 63: la bomba de la planta'],
+    component: C12Section5,
+  },
 ]
 
 export const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
@@ -550,6 +601,7 @@ export const CHAPTERS: { id: ChapterId; label: string; sub: string }[] = [
   { id: 9, label: 'Capítulo 9', sub: 'Máquinas de CC' },
   { id: 10, label: 'Capítulo 10', sub: 'Dinámica de CC' },
   { id: 11, label: 'Capítulo 11', sub: 'Fallas desbalanceadas' },
+  { id: 12, label: 'Capítulo 12', sub: 'Térmica y selección' },
 ]
 
 const ACTIVE_KEY = 'fku-ch5-active-section'

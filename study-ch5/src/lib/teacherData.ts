@@ -388,6 +388,41 @@ export const TEACHING_NOTES: Record<string, TeachingNote> = {
     discusion: '¿Por qué el registro de 3I₀ que sube y luego muere delata una falla evolutiva completa?',
     minutos: 70,
   },
+  'c12s1-': {
+    objetivos: ['Modelar la máquina como RC térmico (θ_ss = P·R_th, τ = R·C)', 'Distinguir sobrecarga corta admisible de sostenida'],
+    errorComun: 'Creer que más masa = más frío: C_th solo compra TIEMPO; el equilibrio lo fija la ventilación (R_th).',
+    demo: 'ThermalRCLab: escalón al 120 % y leer el tiempo hasta el límite; ciclo marcha/paro y la sierra asimétrica (enfría 2.5× más lento parado).',
+    discusion: '¿Por qué el relé térmico 49 protege contra la integral de la corriente y no contra su valor?',
+    minutos: 55,
+  },
+  'c12s2-': {
+    objetivos: ['Usar las clases térmicas y la regla de Montsinger (±10 °C = ×2/÷2 vida)', 'Traducir decisiones térmicas a años de vida'],
+    errorComun: 'Tratar el límite de clase como punto de operación: es un techo — operar ahí es aceptar la vida mínima de diseño.',
+    demo: 'InsulationLifeLab: la práctica F/B (25 °C de margen = ~6× vida) y el costo de un ventilador sucio (+10 °C = mitad).',
+    discusion: '¿Por qué manda el punto CALIENTE y no la temperatura media del devanado?',
+    minutos: 50,
+  },
+  'c12s3-': {
+    objetivos: ['Clasificar servicios S1/S2/S3 y calcular la potencia equivalente RMS', 'Reconocer los límites del método (ciclo vs τ, par pico aparte)'],
+    errorComun: 'Promediar la potencia aritméticamente: las pérdidas van con P² — el tramo al 150 % pesa 2.25, no 1.5.',
+    demo: 'DutyCycleLab: ciclo que el RMS aprueba pero cuyo pico térmico cruza el límite cuando el ciclo se alarga frente a τ.',
+    discusion: '¿Por qué un S2-30 min no puede dar «15 minutos más» en caliente?',
+    minutos: 60,
+  },
+  'c12s4-': {
+    objetivos: ['Aplicar los cuatro derrateos (altitud, ambiente, desbalance, armónicos) en cascada multiplicativa', 'Invertir la cascada para especificar placa'],
+    errorComun: 'Sumar los derrateos o ignorar que el desbalance castiga al CUADRADO (2 % ⇒ −4 %, 5 % ⇒ −25 %).',
+    demo: 'DeratingLab: la planta a 2500 m y 50 °C que deja el 77 % de la placa; añadir desbalance y ver la cascada.',
+    discusion: '¿Qué unifica térmicamente a los cuatro derrateos y por qué se multiplican?',
+    minutos: 55,
+  },
+  'c12s5-': {
+    objetivos: ['Ejecutar el embudo completo: carga → régimen → derrateo → catálogo → verificación de arranque', 'Argumentar contra el sobredimensionamiento sistemático'],
+    errorComun: 'Seleccionar solo por potencia: la banda que no arranca (par constante + tensión baja, par ∝ V²) es el fracaso clásico.',
+    demo: 'SelectionFlowLab: bomba vs banda con el mismo par — el chequeo de arranque pasa holgado en una y rechaza candidatos en la otra.',
+    discusion: '¿Por qué el motor al 40 % de carga es mala ingeniería aunque «sobre» potencia?',
+    minutos: 65,
+  },
 }
 
 // ---------------------------------------------------------------------------
