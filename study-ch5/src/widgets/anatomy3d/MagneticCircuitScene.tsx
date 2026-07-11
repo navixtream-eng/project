@@ -321,7 +321,7 @@ export default function MagneticCircuitScene(props: {
 }) {
   return (
     <Canvas
-      shadows
+      shadows="percentage"
       dpr={[1, 1.6]}
       camera={{ position: [1.35, 1.0, 3.15], fov: 34, near: 0.1, far: 50 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}

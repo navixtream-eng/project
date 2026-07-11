@@ -172,7 +172,7 @@ export default function ActuatorScene(props: {
 }) {
   return (
     <Canvas
-      shadows
+      shadows="percentage"
       dpr={[1, 1.6]}
       camera={{ position: [0.2, 0.8, 4.1], fov: 36, near: 0.1, far: 50 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}

@@ -158,7 +158,7 @@ export default function CommutatorScene({
 
   return (
     <Canvas
-      shadows
+      shadows="percentage"
       dpr={[1, 1.6]}
       camera={{ position: [2.1, 1.5, 4.2], fov: 32, near: 0.1, far: 50 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}

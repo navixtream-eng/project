@@ -26,7 +26,7 @@ export default function ZbusFaultLab() {
   const [tPct, setTPct] = useState(40) // posición de la falla en la línea 2–3 (buses 1–2)
   const [conMotor, setConMotor] = useState(true)
 
-  const { If, V, aportes, zkk, kFalla } = useMemo(() => {
+  const { If, V, aportes, zkk, kFalla, ifInterrupcion, aporteMotor } = useMemo(() => {
     const fuentes: Fuente[] = [
       { bus: 0, x: XG1 },
       { bus: 2, x: XG2 },
@@ -57,7 +57,19 @@ export default function ZbusFaultLab() {
     }
     const Z = buildZbus(n, ramas, fuentes)
     const r = zbusFault(Z, k, fuentes)
-    return { If: abs(r.If), V: r.V.map(abs), aportes: r.aportes, zkk: abs(Z[k][k]), kFalla: k }
+    // Misma falla SIN el motor: es la corriente de interrupción (3-5 ciclos)
+    const fuentesSinM = fuentes.filter((f) => f.bus !== 3)
+    const Zsm = buildZbus(n, ramas, fuentesSinM)
+    const rsm = zbusFault(Zsm, k, fuentesSinM)
+    return {
+      If: abs(r.If),
+      V: r.V.map(abs),
+      aportes: r.aportes,
+      zkk: abs(Z[k][k]),
+      kFalla: k,
+      ifInterrupcion: abs(rsm.If),
+      aporteMotor: conMotor ? r.aportes[2] : 0,
+    }
   }, [modo, busFalla, tPct, conMotor])
 
   const fuentesNombres = ['G1', 'G2', ...(conMotor ? ['Motor'] : [])]
@@ -187,15 +199,65 @@ export default function ZbusFaultLab() {
         </div>
       </div>
 
+      {/* Deberes de corriente: no todas las «corrientes de falla» son la misma */}
+      <div className="mx-3 mb-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+          Deberes de corriente del interruptor — supuestos declarados: X/R ≈ 15 (κ ≈ 1.8), motor de inducción con τ ≈ 1.5 ciclos
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
+            <p className="text-[9px] uppercase text-zinc-500">I″ simétrica inicial (rms)</p>
+            <p className="font-mono text-sm font-semibold text-red-300">{If.toFixed(2)} pu</p>
+            <p className="text-[9px] text-zinc-600">la que da E/Z_kk — la base de todo</p>
+          </div>
+          <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
+            <p className="text-[9px] uppercase text-zinc-500">I de pico (cresta, ½ ciclo)</p>
+            <p className="font-mono text-sm font-semibold text-amber-300">{(If * 1.8 * Math.SQRT2).toFixed(2)} pu</p>
+            <p className="text-[9px] text-zinc-600">κ·√2·I″: el offset de CC encima de la cresta — esfuerzo mecánico (cierre/soporte)</p>
+          </div>
+          <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
+            <p className="text-[9px] uppercase text-zinc-500">I asimétrica ½ ciclo (rms)</p>
+            <p className="font-mono text-sm font-semibold text-amber-200">{(If * 1.5).toFixed(2)} pu</p>
+            <p className="text-[9px] text-zinc-600">≈1.5·I″ con este X/R: CA + componente continua decreciente</p>
+          </div>
+          <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
+            <p className="text-[9px] uppercase text-zinc-500">I de interrupción (3–5 ciclos)</p>
+            <p className="font-mono text-sm font-semibold text-emerald-300">{ifInterrupcion.toFixed(2)} pu</p>
+            <p className="text-[9px] text-zinc-600">motores de inducción ya apagados{conMotor ? ` (−${aporteMotor.toFixed(2)} pu)` : ''}</p>
+          </div>
+        </div>
+        {conMotor && aporteMotor > 0.01 && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-[9px] uppercase text-zinc-500">aporte del motor decae:</span>
+            <svg viewBox="0 0 200 26" className="h-6 w-48">
+              <polyline
+                points={Array.from({ length: 21 }, (_, i) => {
+                  const tCiclos = (i / 20) * 5
+                  const y = 22 - (Math.exp(-tCiclos / 1.5) * 16)
+                  return `${8 + (i / 20) * 184},${y}`
+                }).join(' ')}
+                fill="none" stroke="#f59e0b" strokeWidth={1.6}
+              />
+              <text x={10} y={9} fill="#71717a" fontSize={6.5} fontFamily="monospace">{aporteMotor.toFixed(1)} pu</text>
+              <text x={168} y={24} fill="#71717a" fontSize={6.5} fontFamily="monospace">5 ciclos</text>
+            </svg>
+            <span className="text-[9px] leading-tight text-zinc-600">
+              cuenta completo en el pico y el momentáneo; casi nada al interrumpir
+            </span>
+          </div>
+        )}
+      </div>
+
       <footer className="border-t border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-[11px] leading-relaxed text-zinc-400">
         <span className="font-semibold text-zinc-300">Experimentos guiados: </span>
         (1) falla en cada bus: Z_kk cambia — la MISMA matriz contiene el Thévenin de todos los
         puntos (eso es Zbus: calcular una vez, fallar donde quieras); (2) mira el perfil de
         tensiones: la falla deprime TODO el vecindario y el bus más cercano cae más — así se
         estiman los huecos de tensión (sags) que sienten las cargas lejanas; (3) desliza la falla
-        por la línea: el mínimo de corriente NO está en el centro sino donde el Thévenin combinado
-        es máximo — el bus ficticio es exactamente como los programas profesionales fallan «al 37 %
-        de la línea»; (4) apaga el aporte del motor y falla en Carga: la corriente baja ~1 pu — el
+        por la línea: el mínimo de corriente no suele estar en el centro — cae donde el Thévenin
+        combinado de ESTE sistema es máximo (el punto exacto depende de fuentes, topología y tipo
+        de falla: en la práctica se barre la línea); el bus ficticio es exactamente como los
+        programas profesionales fallan «al 37 % de la línea»; (4) apaga el aporte del motor y falla en Carga: la corriente baja ~1 pu — el
         motor de inducción devuelve corriente de falla durante los primeros ciclos (X″ tras su FEM
         atrapada) y el interruptor debe interrumpir TAMBIÉN esa; (5) todo esto es la red POSITIVA:
         para fallas desbalanceadas se construye una Zbus por secuencia y se conectan en el bus

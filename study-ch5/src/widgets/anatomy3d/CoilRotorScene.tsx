@@ -64,7 +64,7 @@ function Scene({ thetaRef }: { thetaRef: { current: number } }) {
 export default function CoilRotorScene({ thetaRef }: { thetaRef: { current: number } }) {
   return (
     <Canvas
-      shadows
+      shadows="percentage"
       dpr={[1, 1.6]}
       camera={{ position: [1.35, 1.0, 2.5], fov: 36, near: 0.1, far: 50 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}

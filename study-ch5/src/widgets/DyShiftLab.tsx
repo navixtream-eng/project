@@ -55,6 +55,15 @@ export default function DyShiftLab() {
         </h4>
       </header>
 
+      {/* Convención explícita: sin ella los ±30° no significan nada */}
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-zinc-800 bg-zinc-900/40 px-4 py-2 text-[10px]">
+        <span className="font-bold uppercase tracking-widest text-zinc-500">Convención:</span>
+        <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-zinc-300">grupo horario Dyn1 (IEC)</span>
+        <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-zinc-300">referencia: lado Δ (AT) adelanta 30° al Yg (BT) en sec. positiva</span>
+        <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-zinc-300">sentido mostrado: Yg → Δ</span>
+        <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-amber-300/90">con Dyn11 (o mirando Δ → Yg) los signos se INVIERTEN</span>
+      </div>
+
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-zinc-800 px-4 py-2.5 text-xs">
         <span className="text-[11px] text-zinc-400">SLG franca en fase <span className="text-sky-300">a</span> del lado <strong className="text-zinc-200">Yg</strong> de un banco Dyn1:</span>
         <label className="flex items-center gap-2 text-zinc-400">
@@ -86,7 +95,9 @@ export default function DyShiftLab() {
         CERO: dos fases con I_f/√3 y una muerta. Un relé de tierra del lado delta no la ve jamás
         (correcto: la delta partió la zona), y un relé de fase la ve con √3 menos de corriente y
         otra distribución. Los signos opuestos de los desfases (+30°/−30°) son los que fabrican
-        esta metamorfosis.
+        esta metamorfosis. Ojo: las MAGNITUDES y el patrón (2 vivas, 1 muerta, residual cero) no
+        dependen de la convención; los ÁNGULOS individuales sí — por eso el recuadro de convención
+        de arriba acompaña siempre al resultado.
       </div>
 
       <footer className="border-t border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-[11px] leading-relaxed text-zinc-400">

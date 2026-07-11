@@ -172,18 +172,18 @@ export default function C11Section6() {
           },
           {
             title: '(b) Buscar el mínimo: la suma es constante',
-            why: 'Z_A(t) + Z_B(t) = X_A + X_B + X_L para todo t — un producto con suma constante se maximiza cuando los factores se igualan (y el paralelo máximo da la corriente mínima).',
-            work: `Z_A(t^*) = Z_B(t^*) = \\frac{${fmt(suma, 2)}}{2} \\Rightarrow t^* = ${fmt(tMin, 3)} \\;(${fmt(tMin * 100, 0)}\\%\\ \\text{desde A})`,
+            why: 'EN ESTA TOPOLOGÍA (dos fuentes, una sola línea, falla 3φ franca, solo reactancias) la suma Z_A(t) + Z_B(t) = X_A + X_B + X_L es constante — y un producto con suma constante se maximiza cuando los factores se igualan. El razonamiento vale para el caso; el número NO es una constante universal.',
+            work: `Z_A(t^*) = Z_B(t^*) = \\frac{${fmt(suma, 2)}}{2} \\Rightarrow t^* = ${fmt(tMin, 3)} \\;(${fmt(tMin * 100, 0)}\\%\\ \\text{desde A, en ESTE sistema})`,
           },
           {
             title: '(b) La corriente mínima',
             why: 'El peor punto para DETECTAR (no para soportar): la protección debe arrancar incluso ahí.',
             work: `Z_{max} = \\frac{(${fmt(suma / 2, 3)})^2}{${fmt(suma, 2)}} = ${fmt(zMax, 4)} \\Rightarrow I_{f,min} = ${fmt(ifMin, 2)}\\ \\text{pu}`,
-            note: 'El mínimo NO está en el centro geométrico (t = 0.5) sino corrido hacia la fuente más fuerte — al 62.5 % aquí. La intuición geométrica engaña; la eléctrica no.',
+            note: 'Precaución: el t* depende de las impedancias de las fuentes, de la topología (mallas o derivaciones lo mueven), del tipo de falla y de si hay resistencia. En un sistema real se BARRE la línea con el software y se busca el mínimo numéricamente — la lección portable es que existe un mínimo, que no suele estar en el centro, y que ESA es la falla que verifica la sensibilidad.',
           },
         ]}
-        answer={`\\text{(a)}\\ I_f(40\\%) = ${fmt(1 / z40, 2)}\\ \\text{pu} \\qquad \\text{(b)}\\ t^* = ${fmt(tMin * 100, 0)}\\%,\\; I_{f,min} = ${fmt(ifMin, 2)}\\ \\text{pu}`}
-        takeaway="Las fallas se calculan en el peor punto PARA CADA PREGUNTA: la máxima (en barras) dimensiona interruptores; la mínima (a mitad de línea, con resistencia) dimensiona la sensibilidad de los relés."
+        answer={`\\text{(a)}\\ I_f(40\\%) = ${fmt(1 / z40, 2)}\\ \\text{pu} \\qquad \\text{(b)}\\ t^* = ${fmt(tMin * 100, 0)}\\%\\ (\\text{de este ejemplo}),\\; I_{f,min} = ${fmt(ifMin, 2)}\\ \\text{pu}`}
+        takeaway="Las fallas se calculan en el peor punto PARA CADA PREGUNTA: la máxima dimensiona interruptores; la mínima, la sensibilidad de los relés. El punto exacto del mínimo se BUSCA en cada sistema — aquí aprendiste por qué existe y por qué se corre del centro."
       />
 
       <div className="my-8 rounded-xl border border-zinc-700 bg-zinc-900/70 p-4">
@@ -192,7 +192,7 @@ export default function C11Section6() {
         </p>
         <ul className="list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-zinc-300">
           <li>Zbus = Ybus⁻¹: una inversión, todos los Thévenin (diagonal) y todos los huecos de tensión (columnas). Multimáquina = misma teoría + contabilidad matricial.</li>
-          <li>Falla a mitad de línea = bus ficticio. La corriente mínima cae donde los dos Thévenin se igualan — y esa es la falla que debe VER tu relé.</li>
+          <li>Falla a mitad de línea = bus ficticio. Existe un punto de corriente mínima (en la topología simple, donde los Thévenin se igualan; en general, se barre y se busca) — y esa es la falla que debe VER tu relé.</li>
           <li>Los motores devuelven corriente (E″ tras X″) durante los primeros ciclos: cuentan en el momentary duty del interruptor. Desbalanceadas: tres Zbus (una por secuencia) conectadas como en la Sección 4.</li>
         </ul>
       </div>

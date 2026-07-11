@@ -43,7 +43,7 @@ export default function C11Section7() {
         <Formula
           latex="\hat I_1' = \hat I_1\,e^{+j30^\circ} \qquad \hat I_2' = \hat I_2\,e^{-j30^\circ} \qquad \hat I_0' = 0 \;\;\Rightarrow\;\; (I_f,0,0)_{Yg} \to \left(\tfrac{I_f}{\sqrt 3},\,0,\,\tfrac{I_f}{\sqrt 3}\right)_\Delta"
           symbols={[
-            { sym: 'e^{\\pm j30^\\circ}', meaning: 'El desfase del grupo (Dyn1 = 30°). El signo OPUESTO para la negativa es lo no obvio: ambas secuencias giran, pero en sentidos contrarios — olvidarlo arruina el cálculo de corrientes a través del banco.' },
+            { sym: 'e^{\\pm j30^\\circ}', meaning: 'El desfase del grupo (Dyn1 = 30°). El signo OPUESTO para la negativa es lo no obvio: ambas secuencias giran en sentidos contrarios. Y una advertencia de oficio: los signos concretos dependen del GRUPO HORARIO (Dyn11 los invierte), del lado tomado como referencia y del sentido de la transformación — declara siempre la convención junto al resultado, como hace el laboratorio.' },
             { sym: '(I_f/\\sqrt 3, 0, I_f/\\sqrt 3)', meaning: 'El patrón transformado de la SLG: dos fases vivas y una muerta — parece L-L. Un relé de fase del lado delta la ve √3 veces más chica; uno de tierra, no la ve en absoluto.' },
           ]}
         />

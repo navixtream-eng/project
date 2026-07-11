@@ -146,7 +146,7 @@ export default function SlipFieldScene({
 }) {
   return (
     <Canvas
-      shadows
+      shadows="percentage"
       dpr={[1, 1.6]}
       camera={{ position: [1.3, 1.15, 3.3], fov: 33, near: 0.1, far: 50 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}

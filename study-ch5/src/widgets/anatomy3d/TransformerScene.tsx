@@ -145,7 +145,7 @@ function Scene({ turns1, turns2 }: { turns1: number; turns2: number }) {
 export default function TransformerScene({ turns1, turns2 }: { turns1: number; turns2: number }) {
   return (
     <Canvas
-      shadows
+      shadows="percentage"
       dpr={[1, 1.6]}
       camera={{ position: [1.15, 0.9, 3.5], fov: 37, near: 0.1, far: 50 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}

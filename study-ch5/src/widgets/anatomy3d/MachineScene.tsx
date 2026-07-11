@@ -290,7 +290,7 @@ export default function MachineScene({
 }) {
   return (
     <Canvas
-      shadows
+      shadows="percentage"
       dpr={[1, 1.6]}
       camera={{ position: [1.9, 1.35, 2.75], fov: 38, near: 0.1, far: 50 }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
