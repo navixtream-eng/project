@@ -1434,3 +1434,44 @@ export function dcDriveSim(
   }
   return out
 }
+
+// ---------------------------------------------------------------------------
+// §5-8/5-9 — Generadores sincrónicos en paralelo (FKU)
+// ---------------------------------------------------------------------------
+
+/**
+ * Característica velocidad-potencia (estatismo) de una máquina impulsora con
+ * gobernador a regulación constante: f = fNl − k·P. La frecuencia en vacío
+ * fNl es la «perilla» del gobernador; k [Hz/MW] es la pendiente (droop).
+ */
+export interface DroopGen {
+  fNl: number // frecuencia en vacío [Hz] (setpoint del gobernador)
+  k: number // estatismo [Hz/MW]: cuánto cae f por MW entregado
+}
+
+/**
+ * Dos generadores con estatismo compartiendo una carga P_L: la frecuencia
+ * común del sistema es la altura a la que la suma de las dos rectas
+ * f = fNl − k·P consume exactamente P_L (Fig. 5-29).
+ */
+export function droopSolve(g1: DroopGen, g2: DroopGen, pLoad: number) {
+  const f = (g1.fNl / g1.k + g2.fNl / g2.k - pLoad) / (1 / g1.k + 1 / g2.k)
+  return { f, p1: (g1.fNl - f) / g1.k, p2: (g2.fNl - f) / g2.k }
+}
+
+/**
+ * Reparto de reactivos entre dos generadores idénticos en paralelo
+ * (Fig. 5-30): la carga (P_L, Q_L) y el voltaje de terminales quedan fijos;
+ * los gobernadores no se tocan, así que cada máquina conserva P_L/2. La
+ * excitación desplaza reactivos: Q₁ = Q_L/2 + ΔQ, Q₂ = Q_L/2 − ΔQ. Devuelve
+ * los fasores por unidad (V̂t en el eje real) de corriente y excitación.
+ */
+export function reactiveShare(Vt: number, pL: number, qL: number, dQ: number, Xs: number) {
+  const mk = (P: number, Q: number) => {
+    // Ia = (S/Vt)* con S = P + jQ  →  conj: Ia = (P − jQ)/Vt
+    const Ia = cx(P / Vt, -Q / Vt)
+    const Eaf = add(cx(Vt, 0), mulJ(scale(Ia, Xs)))
+    return { Ia, Eaf, mag: abs(Eaf), delta: arg(Eaf), P, Q, fp: P / Math.hypot(P, Q) || 1 }
+  }
+  return { g1: mk(pL / 2, qL / 2 + dQ), g2: mk(pL / 2, qL / 2 - dQ) }
+}

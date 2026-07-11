@@ -19,6 +19,7 @@ import Section3 from '../sections/Section3'
 import Section4 from '../sections/Section4'
 import Section5 from '../sections/Section5'
 import Section6 from '../sections/Section6'
+import Section7 from '../sections/Section7'
 import C6Section1 from '../sections/C6Section1'
 import C6Section2 from '../sections/C6Section2'
 import C6Section3 from '../sections/C6Section3'
@@ -227,6 +228,15 @@ export const SECTIONS: SectionDef[] = [
     title: 'Pérdidas y rendimiento',
     items: ['Costos fijos vs variables', 'η máximo: cuadráticas = resto', 'Problemas 10 y 11: desglose y punto dulce'],
     component: Section6,
+  },
+  {
+    chapter: 5,
+    num: 7,
+    prefix: 's7-',
+    short: 'En paralelo',
+    title: 'Generadores en paralelo',
+    items: ['Sincronización y sincroscopio', 'Gobernadores: f y los MW (Fig. 5-29)', 'Excitación: V y los kVAR (Fig. 5-30)', 'Problemas 47 y 48: estatismo y reactivos'],
+    component: Section7,
   },
   {
     chapter: 6,

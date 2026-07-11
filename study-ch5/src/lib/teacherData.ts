@@ -157,6 +157,13 @@ export const TEACHING_NOTES: Record<string, TeachingNote> = {
     discusion: '¿Por qué el rendimiento máximo no coincide con la potencia máxima?',
     minutos: 45,
   },
+  's7-': {
+    objetivos: ['Ejecutar el procedimiento de sincronización y justificar el cierre con ΔV ≈ 0', 'Repartir potencia activa con estatismo de gobernadores (Fig. 5-29)', 'Repartir reactivos con la excitación manteniendo Eaf·senδ constante (Fig. 5-30)'],
+    errorComun: 'Creer que la excitación mueve los watts: subir If solo redistribuye kVAR y voltaje; los MW los fijan las máquinas impulsoras.',
+    demo: 'Sincroscopio del laboratorio: cerrar S₂ a propósito en las 6 y discutir la corriente de choque; luego la maniobra de la Fig. 5-29 (subir un gobernador, bajar el otro).',
+    discusion: '¿Por qué la red necesita que las rectas de los gobernadores CAIGAN (estatismo) en lugar de ser planas?',
+    minutos: 60,
+  },
   'c6s1-': {
     objetivos: ['Aplicar el teorema de conservación del flujo λ(0⁺)=λ(0⁻)', 'Introducir la transformación d-q-0 y el modelo E′ tras X′d'],
     errorComun: 'Creer que la corriente puede saltar en el instante de la falla; lo que se conserva es el ENLACE DE FLUJO.',
@@ -421,6 +428,25 @@ export const PROBLEM_TEMPLATES: ProblemTemplate[] = [
         params: { Eaf, Xs, Pm },
         statement: `Un generador síncrono cilíndrico (Eaf = ${fmt(Eaf, 1)} pu, Xs = ${fmt(Xs, 1)} pu) opera contra una barra infinita (Vt = 1.0 pu) entregando P = ${fmt(Pm, 2)} pu. Halle (a) la potencia máxima transmisible, (b) el ángulo de potencia δ, y (c) el margen de reserva de estabilidad.`,
         answer: `Pmax = Eaf·Vt/Xs = ${fmt(Pmax, 2)} pu. δ = arcsen(P·Xs/(Eaf·Vt)) = ${fmt(delta, 1)}°. Margen = (Pmax−P)/Pmax = ${fmt(margen, 0)} %.`,
+      }
+    },
+  },
+  {
+    id: 'c5-paralelo',
+    chapter: 5,
+    title: 'Generadores en paralelo: estatismo y frecuencia',
+    generate() {
+      const k = rnd(0.8, 1.5, 0.1)
+      const f1 = rnd(60.8, 62.0, 0.1)
+      const f2 = rnd(60.5, f1, 0.1)
+      const pL = rnd(1.5, 4, 0.25)
+      const f = (f1 / k + f2 / k - pL) / (1 / k + 1 / k)
+      const p1 = (f1 - f) / k
+      const p2 = (f2 - f) / k
+      return {
+        params: { k, f1, f2, pL },
+        statement: `Dos generadores sincrónicos en paralelo alimentan una carga de ${fmt(pL, 2)} MW. Ambos gobernadores tienen estatismo k = ${fmt(k, 1)} Hz/MW; en vacío el generador 1 quedaría a ${fmt(f1, 1)} Hz y el 2 a ${fmt(f2, 1)} Hz. Halle (a) la frecuencia del sistema, (b) la potencia de cada generador, y (c) cuánto debe subirse el setpoint de AMBOS gobernadores para devolver la frecuencia a 60 Hz sin alterar el reparto.`,
+        answer: `f = (f₁+f₂−k·P_L)/2 = ${fmt(f, 2)} Hz. P₁ = (${fmt(f1, 1)}−f)/k = ${fmt(p1, 2)} MW, P₂ = ${fmt(p2, 2)} MW. Para volver a 60 Hz: subir ambos setpoints ${fmt(60 - f, 2)} Hz (el reparto depende solo de la DIFERENCIA de setpoints).`,
       }
     },
   },
