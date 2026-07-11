@@ -205,6 +205,10 @@ export const ALL_CHECK_IDS = [
   'c12s5-check-arranque',
   'c12s5-check-sobredim',
   'c12s5-problema-seleccion',
+  'c12s6-check-variador',
+  'c12s6-check-ensayo',
+  'c12s6-problema-ensayo',
+  'c12s6-problema-vfd',
 ] as const
 
 export type CheckId = (typeof ALL_CHECK_IDS)[number]

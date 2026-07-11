@@ -69,6 +69,7 @@ import C12Section2 from '../sections/C12Section2'
 import C12Section3 from '../sections/C12Section3'
 import C12Section4 from '../sections/C12Section4'
 import C12Section5 from '../sections/C12Section5'
+import C12Section6 from '../sections/C12Section6'
 
 export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
 
@@ -586,6 +587,15 @@ export const SECTIONS: SectionDef[] = [
     title: 'El flujo de selección completo',
     items: ['Tipo de carga → potencia → derrateo → catálogo', 'Verificar el arranque (par ∝ V²)', 'Problema 63: la bomba de la planta'],
     component: C12Section5,
+  },
+  {
+    chapter: 12,
+    num: 6,
+    prefix: 'c12s6-',
+    short: 'Modelo fino',
+    title: 'Dos nodos y el ensayo de calentamiento',
+    items: ['Pérdidas separadas: par, frecuencia, velocidad', 'Devanado rápido vs carcasa lenta', 'Variador a baja velocidad: el caso crítico', 'Ensayo: estimar θ_ss, τ, R_th, C_th', 'Problemas 64 y 65'],
+    component: C12Section6,
   },
 ]
 

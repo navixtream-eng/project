@@ -423,6 +423,13 @@ export const TEACHING_NOTES: Record<string, TeachingNote> = {
     discusion: '¿Por qué el motor al 40 % de carga es mala ingeniería aunque «sobre» potencia?',
     minutos: 65,
   },
+  'c12s6-': {
+    objetivos: ['Separar pérdidas por su variable (par, frecuencia, velocidad) y la refrigeración por su tipo', 'Usar el modelo de dos nodos (devanado/carcasa) y estimar parámetros con el ensayo de calentamiento'],
+    errorComun: 'Tocar la carcasa y declarar «está frío»: el devanado (τ ≈ 8 min) puede estar al límite mientras la carcasa (τ ≈ 60 min) ni se entera.',
+    demo: 'TwoNodeLab: par 100 % al 30 % de velocidad autoventilado — pérdidas al 66 % y devanado SOBRE el límite; HeatRunLab: recortar el ensayo bajo 1.5τ y ver explotar el error de extrapolación.',
+    discusion: '¿Por qué el variador desacopla la velocidad de la red pero no el ventilador del eje?',
+    minutos: 75,
+  },
 }
 
 // ---------------------------------------------------------------------------

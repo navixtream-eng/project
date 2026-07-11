@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { FlaskConical } from 'lucide-react'
-import { derateAltitud, derateAmbiente, derateArmonicos, derateDesbalance } from '../lib/termica'
+import {
+  TABLA_ALTITUD,
+  TABLA_AMBIENTE,
+  derateAltitud,
+  derateAmbiente,
+  derateArmonicos,
+  derateDesbalance,
+  interpTabla,
+} from '../lib/termica'
 
 /**
  * Laboratorio — Derrateo: la placa promete en condiciones de referencia.
@@ -14,18 +22,19 @@ export default function DeratingLab() {
   const [tamb, setTamb] = useState(40)
   const [v2, setV2] = useState(0)
   const [thd, setThd] = useState(0)
+  const [modo, setModo] = useState<'regla' | 'tabla'>('tabla')
 
-  const f1 = derateAltitud(alt)
-  const f2 = derateAmbiente(tamb)
+  const f1 = modo === 'tabla' ? interpTabla(TABLA_ALTITUD, alt) : derateAltitud(alt)
+  const f2 = modo === 'tabla' ? interpTabla(TABLA_AMBIENTE, tamb) : derateAmbiente(tamb)
   const f3 = derateDesbalance(v2)
   const f4 = derateArmonicos(thd)
   const fTotal = f1 * f2 * f3 * f4
   const pUtil = pkw * fTotal
 
   const factores = [
-    { nombre: `Altitud ${alt} m`, f: f1, color: '#38bdf8', regla: '−1 %/100 m sobre 1000' },
-    { nombre: `Ambiente ${tamb} °C`, f: f2, color: '#f59e0b', regla: '−1 %/°C sobre 40' },
-    { nombre: `Desbalance ${v2} %`, f: f3, color: '#f472b6', regla: '≈1−(V₂%)²/100 (NEMA)' },
+    { nombre: `Altitud ${alt} m`, f: f1, color: '#38bdf8', regla: modo === 'tabla' ? 'tabla de catálogo interpolada' : '−1 %/100 m sobre 1000 (regla)' },
+    { nombre: `Ambiente ${tamb} °C`, f: f2, color: '#f59e0b', regla: modo === 'tabla' ? 'tabla de catálogo interpolada' : '−1 %/°C sobre 40 (regla)' },
+    { nombre: `Desbalance ${v2} %`, f: f3, color: '#f472b6', regla: '≈1−(V₂%)²/100 (NEMA aprox.)' },
     { nombre: `THD ${thd} %`, f: f4, color: '#a78bfa', regla: '≈1−THD/200 (HVF aprox.)' },
   ]
 
@@ -45,6 +54,19 @@ export default function DeratingLab() {
           Laboratorio · Derrateo en cascada: de la placa a tu instalación
         </h4>
       </header>
+
+      <div className="flex flex-wrap items-center gap-2 border-b border-zinc-800 px-4 py-2 text-[10px]">
+        <span className="font-bold uppercase tracking-widest text-zinc-500">Altitud y ambiente desde:</span>
+        <button type="button" onClick={() => setModo('tabla')}
+          className={`rounded-md px-2 py-1 font-bold ${modo === 'tabla' ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/50' : 'text-zinc-500 hover:text-zinc-300'}`}>
+          Tabla tipo catálogo (interpolada)
+        </button>
+        <button type="button" onClick={() => setModo('regla')}
+          className={`rounded-md px-2 py-1 font-bold ${modo === 'regla' ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/50' : 'text-zinc-500 hover:text-zinc-300'}`}>
+          Regla aproximada
+        </button>
+        <span className="text-zinc-600">valores típicos publicados — sustituibles por la tabla de TU fabricante</span>
+      </div>
 
       <div className="grid gap-x-6 gap-y-2 border-b border-zinc-800 px-4 py-2.5 text-xs sm:grid-cols-2">
         <label className="flex items-center gap-2 text-zinc-400">
