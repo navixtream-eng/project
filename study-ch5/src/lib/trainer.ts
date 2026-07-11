@@ -14,75 +14,12 @@ import {
 // mezcladas a propósito: reconocer qué NO se usa es parte del entrenamiento.
 // ---------------------------------------------------------------------------
 
+import { mcq, rnd, type TrainerFamily } from './trainerCore'
+import { ADVANCED_FAMILIES } from './trainerAdvanced'
+
+export * from './trainerCore'
+
 const MU0 = 4 * Math.PI * 1e-7
-
-export type Nivel = 1 | 2 | 3
-
-export interface TrainerOption {
-  label: string
-  correct?: boolean
-  feedback: string
-}
-export interface TrainerMCQ {
-  question: string
-  options: TrainerOption[]
-}
-export interface DataRow {
-  label: string
-  value: string
-  /** Se revela al final: entrena a distinguir lo útil de lo decorativo. */
-  tag: 'útil' | 'irrelevante' | 'redundante'
-}
-export interface NumericAnswer {
-  label: string
-  value: number
-  unit: string
-  /** Tolerancia relativa (por defecto 3 %). */
-  tolPct?: number
-}
-export interface Supuesto {
-  label: string
-  correcto: boolean
-}
-export interface TrainerProblem {
-  familyId: string
-  title: string
-  chapter: number
-  level: Nivel
-  statement: string
-  data: DataRow[]
-  identificar: TrainerMCQ
-  /** Solo niveles 2–3: cazar el dato irrelevante o redundante. */
-  datos?: TrainerMCQ
-  metodo: TrainerMCQ
-  supuestos: Supuesto[]
-  respuestas: NumericAnswer[]
-  validacion: TrainerMCQ
-  solucion: string[]
-}
-export interface TrainerFamily {
-  id: string
-  title: string
-  chapter: number
-  level: Nivel
-  generate: () => TrainerProblem
-}
-
-const rnd = (min: number, max: number, step = 1) =>
-  Math.round((min + Math.random() * (max - min)) / step) * step
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
-const mcq = (question: string, options: TrainerOption[]): TrainerMCQ => ({
-  question,
-  options: shuffle(options),
-})
 
 // ---------------------------------------------------------------------------
 // NIVEL 1 · Básicos: una sola herramienta, datos limpios
@@ -893,6 +830,7 @@ export const TRAINER_FAMILIES: TrainerFamily[] = [
   trafo3f,
   motorNema,
   dcArranque,
+  ...ADVANCED_FAMILIES,
 ]
 
 /** Los 7 pasos del ciclo del ingeniero, en orden. */
