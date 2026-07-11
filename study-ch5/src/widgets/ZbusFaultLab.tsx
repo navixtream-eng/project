@@ -25,6 +25,11 @@ export default function ZbusFaultLab() {
   const [busFalla, setBusFalla] = useState(1)
   const [tPct, setTPct] = useState(40) // posición de la falla en la línea 2–3 (buses 1–2)
   const [conMotor, setConMotor] = useState(true)
+  // Panel de deberes: modo didáctico (factores fijos) o IEC/IEEE (dependencias reales)
+  const [modoDeber, setModoDeber] = useState<'didactico' | 'iec'>('didactico')
+  const [xr, setXr] = useState(15) // relación X/R del sistema
+  const [tSep, setTSep] = useState(3) // tiempo de separación de contactos [ciclos]
+  const [tauM, setTauM] = useState(1.5) // constante de tiempo del motor [ciclos]
 
   const { If, V, aportes, zkk, kFalla, ifInterrupcion, aporteMotor } = useMemo(() => {
     const fuentes: Fuente[] = [
@@ -200,32 +205,99 @@ export default function ZbusFaultLab() {
       </div>
 
       {/* Deberes de corriente: no todas las «corrientes de falla» son la misma */}
-      <div className="mx-3 mb-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-          Deberes de corriente del interruptor — supuestos declarados: X/R ≈ 15 (κ ≈ 1.8), motor de inducción con τ ≈ 1.5 ciclos
-        </p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
-            <p className="text-[9px] uppercase text-zinc-500">I″ simétrica inicial (rms)</p>
-            <p className="font-mono text-sm font-semibold text-red-300">{If.toFixed(2)} pu</p>
-            <p className="text-[9px] text-zinc-600">la que da E/Z_kk — la base de todo</p>
-          </div>
-          <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
-            <p className="text-[9px] uppercase text-zinc-500">I de pico (cresta, ½ ciclo)</p>
-            <p className="font-mono text-sm font-semibold text-amber-300">{(If * 1.8 * Math.SQRT2).toFixed(2)} pu</p>
-            <p className="text-[9px] text-zinc-600">κ·√2·I″: el offset de CC encima de la cresta — esfuerzo mecánico (cierre/soporte)</p>
-          </div>
-          <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
-            <p className="text-[9px] uppercase text-zinc-500">I asimétrica ½ ciclo (rms)</p>
-            <p className="font-mono text-sm font-semibold text-amber-200">{(If * 1.5).toFixed(2)} pu</p>
-            <p className="text-[9px] text-zinc-600">≈1.5·I″ con este X/R: CA + componente continua decreciente</p>
-          </div>
-          <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
-            <p className="text-[9px] uppercase text-zinc-500">I de interrupción (3–5 ciclos)</p>
-            <p className="font-mono text-sm font-semibold text-emerald-300">{ifInterrupcion.toFixed(2)} pu</p>
-            <p className="text-[9px] text-zinc-600">motores de inducción ya apagados{conMotor ? ` (−${aporteMotor.toFixed(2)} pu)` : ''}</p>
-          </div>
-        </div>
+      {(() => {
+        const esIec = modoDeber === 'iec'
+        // κ según IEC 60909: 1.02 + 0.98·e^(−3/(X/R)); didáctico: 1.8 fijo (X/R = 15)
+        const kappa = esIec ? 1.02 + 0.98 * Math.exp(-3 / xr) : 1.8
+        // Factor asimétrico rms en c ciclos (peor instante de cierre: CC máxima)
+        const fAsim = (c: number) => Math.sqrt(1 + 2 * Math.exp((-4 * Math.PI * c) / (esIec ? xr : 15)))
+        // Interrupción: didáctico retira el motor por completo; IEC lo deja decaer con τ
+        const motorRemanente = esIec ? aporteMotor * Math.exp(-tSep / tauM) : 0
+        const iInt = ifInterrupcion + motorRemanente
+        return (
+          <div className="mx-3 mb-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                Deberes de corriente del interruptor
+              </p>
+              <button type="button" onClick={() => setModoDeber('didactico')}
+                className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${!esIec ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/50' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                Didáctico (aprox.)
+              </button>
+              <button type="button" onClick={() => setModoDeber('iec')}
+                className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${esIec ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/50' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                IEC/IEEE (detallado)
+              </button>
+              {esIec ? (
+                <span className="flex flex-wrap items-center gap-2 text-[10px] text-zinc-400">
+                  <label className="flex items-center gap-1">
+                    X/R
+                    <input type="range" min={5} max={30} step={1} value={xr} onChange={(e) => setXr(Number(e.target.value))} className="w-16" />
+                    <span className="w-6 font-mono text-zinc-200">{xr}</span>
+                  </label>
+                  <label className="flex items-center gap-1">
+                    t separación
+                    {[1.5, 3, 5].map((t) => (
+                      <button key={t} type="button" onClick={() => setTSep(t)}
+                        className={`rounded px-1 py-0.5 font-mono ${tSep === t ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500'}`}>
+                        {t}c
+                      </button>
+                    ))}
+                  </label>
+                  <label className="flex items-center gap-1">
+                    τ motor
+                    {[1, 1.5, 3].map((t) => (
+                      <button key={t} type="button" onClick={() => setTauM(t)}
+                        className={`rounded px-1 py-0.5 font-mono ${tauM === t ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500'}`}>
+                        {t}c
+                      </button>
+                    ))}
+                  </label>
+                </span>
+              ) : (
+                <span className="text-[10px] text-zinc-500">supuestos fijos del ejemplo: X/R = 15 (κ ≈ 1.8) · τ motor = 1.5 ciclos</span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
+                <p className="text-[9px] uppercase text-zinc-500">I″ simétrica inicial (rms)</p>
+                <p className="font-mono text-sm font-semibold text-red-300">{If.toFixed(2)} pu</p>
+                <p className="text-[9px] text-zinc-600">la que da E/Z_kk — la base de todo</p>
+              </div>
+              <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
+                <p className="text-[9px] uppercase text-zinc-500">I de pico (cresta, ½ ciclo)</p>
+                <p className="font-mono text-sm font-semibold text-amber-300">{(If * kappa * Math.SQRT2).toFixed(2)} pu</p>
+                <p className="text-[9px] text-zinc-600">
+                  κ·√2·I″ con κ = {kappa.toFixed(2)}{esIec ? ` = 1.02+0.98e^(−3/${xr})` : ''} — esfuerzo mecánico (cierre/soporte)
+                </p>
+              </div>
+              <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
+                <p className="text-[9px] uppercase text-zinc-500">I asimétrica ½ ciclo (rms)</p>
+                <p className="font-mono text-sm font-semibold text-amber-200">{(If * fAsim(0.5)).toFixed(2)} pu</p>
+                <p className="text-[9px] text-zinc-600">
+                  factor {fAsim(0.5).toFixed(2)}·I″ = √(1+2e^(−4πc/(X/R))) en el PEOR instante de cierre
+                </p>
+              </div>
+              <div className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1.5">
+                <p className="text-[9px] uppercase text-zinc-500">I de interrupción ({esIec ? `${tSep} ciclos` : '3–5 ciclos'})</p>
+                <p className="font-mono text-sm font-semibold text-emerald-300">{iInt.toFixed(2)} pu</p>
+                <p className="text-[9px] text-zinc-600">
+                  {esIec
+                    ? `red + motor decaído: ${ifInterrupcion.toFixed(2)} + ${aporteMotor.toFixed(2)}·e^(−${tSep}/${tauM}) = +${motorRemanente.toFixed(2)}`
+                    : `motor retirado por completo${conMotor ? ` (−${aporteMotor.toFixed(2)} pu)` : ''} — simplificación`}
+                </p>
+              </div>
+            </div>
+            <p className="mt-2 text-[10px] leading-relaxed text-zinc-500">
+              <strong className="text-zinc-400">Límites del modelo:</strong> la asimetría mostrada
+              supone el PEOR instante de falla (tensión en cruce por cero → CC máxima); el instante
+              real la reduce. El factor 1.5 del modo didáctico solo vale para X/R ≈ 15 — cambia X/R
+              en el modo detallado y míralo moverse. El aporte del motor a los 3–5 ciclos depende de
+              su potencia, X″ y constantes de tiempo: retirarlo por completo (didáctico) es una
+              SIMPLIFICACIÓN — conservadora para verificar sensibilidad de relés, optimista para
+              especificar el interruptor. La especificación real sigue IEC 60909 / IEEE C37.010 con
+              los datos del fabricante.
+            </p>
         {conMotor && aporteMotor > 0.01 && (
           <div className="mt-2 flex items-center gap-2">
             <span className="text-[9px] uppercase text-zinc-500">aporte del motor decae:</span>
@@ -233,7 +305,7 @@ export default function ZbusFaultLab() {
               <polyline
                 points={Array.from({ length: 21 }, (_, i) => {
                   const tCiclos = (i / 20) * 5
-                  const y = 22 - (Math.exp(-tCiclos / 1.5) * 16)
+                  const y = 22 - (Math.exp(-tCiclos / (esIec ? tauM : 1.5)) * 16)
                   return `${8 + (i / 20) * 184},${y}`
                 }).join(' ')}
                 fill="none" stroke="#f59e0b" strokeWidth={1.6}
@@ -246,7 +318,9 @@ export default function ZbusFaultLab() {
             </span>
           </div>
         )}
-      </div>
+          </div>
+        )
+      })()}
 
       <footer className="border-t border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-[11px] leading-relaxed text-zinc-400">
         <span className="font-semibold text-zinc-300">Experimentos guiados: </span>
