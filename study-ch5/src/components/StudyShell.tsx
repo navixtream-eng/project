@@ -62,6 +62,8 @@ import C11Section2 from '../sections/C11Section2'
 import C11Section3 from '../sections/C11Section3'
 import C11Section4 from '../sections/C11Section4'
 import C11Section5 from '../sections/C11Section5'
+import C11Section6 from '../sections/C11Section6'
+import C11Section7 from '../sections/C11Section7'
 
 export type ChapterId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
 
@@ -515,6 +517,24 @@ export const SECTIONS: SectionDef[] = [
     title: 'El residual 3I₀ y la coordinación',
     items: ['51N: medir lo que solo la falla produce', 'El flujo integral de ajuste', 'Problema 54: la falla que el 51 no ve'],
     component: C11Section5,
+  },
+  {
+    chapter: 11,
+    num: 6,
+    prefix: 'c11s6-',
+    short: 'Zbus',
+    title: 'Zbus: el sistema multimáquina',
+    items: ['Z_kk: todos los Thévenin a la vez', 'Falla a mitad de línea (bus ficticio)', 'Aporte de motores al momentáneo', 'Problemas 55 y 56'],
+    component: C11Section6,
+  },
+  {
+    chapter: 11,
+    num: 7,
+    prefix: 'c11s7-',
+    short: 'Refinamientos',
+    title: 'Desfases, motores y fallas evolutivas',
+    items: ['±30° del Dyn1 sobre las secuencias', 'La SLG que se vuelve «bifásica»', 'Fallas evolutivas y cross-country', 'Problemas 57 y 58'],
+    component: C11Section7,
   },
 ]
 

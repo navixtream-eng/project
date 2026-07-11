@@ -168,3 +168,95 @@ export function zeroSeqTopology(lado1: Conexion, lado2: Conexion): ZeroSeqTopolo
   else regla = 'Δ–Δ: ambas deltas atrapan; sin neutro a tierra no entra ni sale I0 — red cero abierta hacia ambas líneas.'
   return { through, shunt1, shunt2, regla }
 }
+
+// ---------------------------------------------------------------------------
+// §11.6 — El sistema completo: Ybus/Zbus y fallas en cualquier punto
+// ---------------------------------------------------------------------------
+
+export type CMat = Complex[][]
+
+/** Inversión de matriz compleja por Gauss-Jordan con pivoteo parcial. */
+export function cinv(A: CMat): CMat {
+  const n = A.length
+  // Matriz aumentada [A | I]
+  const M: Complex[][] = A.map((row, i) => [
+    ...row.map((z) => cx(z.re, z.im)),
+    ...Array.from({ length: n }, (_, j) => cx(i === j ? 1 : 0, 0)),
+  ])
+  for (let col = 0; col < n; col++) {
+    // Pivoteo parcial
+    let piv = col
+    for (let r = col + 1; r < n; r++) if (abs(M[r][col]) > abs(M[piv][col])) piv = r
+    ;[M[col], M[piv]] = [M[piv], M[col]]
+    const d = M[col][col]
+    for (let j = 0; j < 2 * n; j++) M[col][j] = cdiv(M[col][j], d)
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue
+      const f = M[r][col]
+      if (abs(f) < 1e-12) continue
+      for (let j = 0; j < 2 * n; j++) M[r][j] = sub(M[r][j], cmul(f, M[col][j]))
+    }
+  }
+  return M.map((row) => row.slice(n))
+}
+
+export interface Rama {
+  de: number // bus origen (0-indexado)
+  a: number // bus destino
+  x: number // reactancia [pu]
+}
+export interface Fuente {
+  bus: number
+  x: number // reactancia de la fuente a referencia [pu]
+}
+
+/** Construye Ybus (solo reactancias) y devuelve Zbus = Ybus⁻¹. */
+export function buildZbus(nBuses: number, ramas: Rama[], fuentes: Fuente[]): CMat {
+  const Y: CMat = Array.from({ length: nBuses }, () =>
+    Array.from({ length: nBuses }, () => cx(0, 0)),
+  )
+  const yOf = (x: number) => cdiv(cx(1, 0), cx(0, x))
+  for (const r of ramas) {
+    const y = yOf(r.x)
+    Y[r.de][r.de] = add(Y[r.de][r.de], y)
+    Y[r.a][r.a] = add(Y[r.a][r.a], y)
+    Y[r.de][r.a] = sub(Y[r.de][r.a], y)
+    Y[r.a][r.de] = sub(Y[r.a][r.de], y)
+  }
+  for (const f of fuentes) {
+    Y[f.bus][f.bus] = add(Y[f.bus][f.bus], yOf(f.x))
+  }
+  return cinv(Y)
+}
+
+export interface ZbusFaultResult {
+  /** Corriente de falla trifásica en el bus k [pu] */
+  If: Complex
+  /** Tensión de cada bus durante la falla [pu] */
+  V: Complex[]
+  /** Aporte de cada fuente = (E − V_bus)/jx [pu] */
+  aportes: number[]
+}
+
+/** Falla trifásica franca en el bus k: If = E/Zkk, V_i = E(1 − Z_ik/Z_kk). */
+export function zbusFault(Z: CMat, k: number, fuentes: Fuente[], E = 1): ZbusFaultResult {
+  const Ef = cx(E, 0)
+  const If = cdiv(Ef, Z[k][k])
+  const V = Z.map((_, i) => sub(Ef, cmul(cdiv(Z[i][k], Z[k][k]), Ef)))
+  const aportes = fuentes.map((f) => abs(cdiv(sub(Ef, V[f.bus]), cx(0, f.x))))
+  return { If, V, aportes }
+}
+
+/**
+ * Corrientes de línea al otro lado de un banco Dyn1 durante una falla
+ * desbalanceada: la positiva se desfasa +30° y la negativa −30° (¡signos
+ * opuestos!), la cero no cruza. Entrada y salida en fasores de secuencia.
+ */
+export function throughDyn1(seqI: Secuencias): Tripleta {
+  const shifted: Secuencias = {
+    s0: cx(0, 0),
+    s1: cmul(seqI.s1, cis(1, Math.PI / 6)),
+    s2: cmul(seqI.s2, cis(1, -Math.PI / 6)),
+  }
+  return seq012ToAbc(shifted)
+}

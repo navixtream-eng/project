@@ -374,6 +374,20 @@ export const TEACHING_NOTES: Record<string, TeachingNote> = {
     discusion: '¿Por qué elegir la SEÑAL correcta (residual) vale más que un relé más sensible?',
     minutos: 65,
   },
+  'c11s6-': {
+    objetivos: ['Construir Ybus/Zbus y leer Z_kk (Thévenin) y Z_ik (huecos de tensión)', 'Fallar a mitad de línea con bus ficticio y sumar el aporte de motores'],
+    errorComun: 'Creer que cada falla exige reducir la red a mano: la Zbus se invierte UNA vez y contiene todos los Thévenin.',
+    demo: 'Laboratorio Zbus: recorrer los buses viendo Z_kk cambiar; deslizar la falla por la línea y encontrar el mínimo fuera del centro; apagar el aporte del motor.',
+    discusion: '¿Por qué la corriente mínima de falla dimensiona la SENSIBILIDAD del relé y la máxima el interruptor?',
+    minutos: 75,
+  },
+  'c11s7-': {
+    objetivos: ['Aplicar el ±30° del grupo vectorial a cada secuencia (signos opuestos)', 'Analizar fallas evolutivas y el aporte de motores; plantear la cross-country'],
+    errorComun: 'Desfasar ambas secuencias con el mismo signo — la negativa gira al revés y el patrón del otro lado del banco sale mal.',
+    demo: 'DyShiftLab: la SLG que se vuelve patrón bifásico con residual cero; EvolvingFaultLab: leer el 3I₀ como narrador de la evolución.',
+    discusion: '¿Por qué el registro de 3I₀ que sube y luego muere delata una falla evolutiva completa?',
+    minutos: 70,
+  },
 }
 
 // ---------------------------------------------------------------------------
