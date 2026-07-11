@@ -9,9 +9,11 @@ import {
   Presentation,
   RotateCcw,
   Sun,
+  Target,
   Zap,
 } from 'lucide-react'
 import { ALL_CHECK_IDS, useProgress } from './ProgressContext'
+import EntrenadorHub from './EntrenadorHub'
 import TeacherHub from './TeacherHub'
 import Section1 from '../sections/Section1'
 import Section2 from '../sections/Section2'
@@ -514,6 +516,7 @@ export default function StudyShell() {
   const activeChapterBtnRef = useRef<HTMLButtonElement>(null)
   const activeTabBtnRef = useRef<HTMLButtonElement>(null)
   const [teacherOpen, setTeacherOpen] = useState(false)
+  const [entrenadorOpen, setEntrenadorOpen] = useState(false)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -567,6 +570,7 @@ export default function StudyShell() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <TeacherHub open={teacherOpen} onClose={() => setTeacherOpen(false)} />
+      <EntrenadorHub open={entrenadorOpen} onClose={() => setEntrenadorOpen(false)} />
       {/* Encabezado */}
       <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur">
         {/* Fila 1: marca + tema + progreso */}
@@ -598,6 +602,15 @@ export default function StudyShell() {
                 <RotateCcw size={14} />
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setEntrenadorOpen(true)}
+              title="Entrenador de problemas"
+              className="flex h-8 items-center gap-1.5 rounded-full border border-zinc-700 px-2.5 text-xs font-semibold text-zinc-400 transition-colors hover:border-emerald-500/50 hover:text-emerald-300"
+            >
+              <Target size={14} />
+              <span className="hidden sm:inline">Entrenar</span>
+            </button>
             <button
               type="button"
               onClick={() => setTeacherOpen(true)}
