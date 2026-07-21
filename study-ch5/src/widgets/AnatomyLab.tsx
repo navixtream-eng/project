@@ -75,6 +75,12 @@ export default function AnatomyLab() {
 
   useEffect(() => {
     if (!touring) return
+    // Al iniciar el recorrido: posición inicial y escena lista (fuera del
+    // updater de estado — los updaters deben ser puros).
+    setPart('estator')
+    setReveal(1)
+    setExploded(false)
+    setRunning(true)
     const timer = window.setInterval(() => {
       setPart((current) => PART_ORDER[(PART_ORDER.indexOf(current) + 1) % PART_ORDER.length])
     }, 3600)
@@ -86,18 +92,7 @@ export default function AnatomyLab() {
     setPart(next)
   }
 
-  const toggleTour = () => {
-    setTouring((value) => {
-      const next = !value
-      if (next) {
-        setPart('estator')
-        setReveal(1)
-        setExploded(false)
-        setRunning(true)
-      }
-      return next
-    })
-  }
+  const toggleTour = () => setTouring((value) => !value)
 
   const info = INFO[machine][part]
   const partIdx = PART_ORDER.indexOf(part) + 1
