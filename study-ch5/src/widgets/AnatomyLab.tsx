@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { FlaskConical, RotateCcw } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Box, FlaskConical, Pause, Play, RotateCcw } from 'lucide-react'
 import MachineScene, { type Machine, type Part } from './anatomy3d/MachineScene'
 
 // Puntos de color a juego con la paleta del render 3D
@@ -63,6 +63,41 @@ export default function AnatomyLab() {
   const [machine, setMachine] = useState<Machine>('sincrona')
   const [part, setPart] = useState<Part>('entrehierro')
   const [resetSignal, setResetSignal] = useState(0)
+  const [running, setRunning] = useState(true)
+  const [touring, setTouring] = useState(false)
+  const [exploded, setExploded] = useState(false)
+  const [reveal, setReveal] = useState(1)
+  const [speed, setSpeed] = useState(1)
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setRunning(false)
+  }, [])
+
+  useEffect(() => {
+    if (!touring) return
+    const timer = window.setInterval(() => {
+      setPart((current) => PART_ORDER[(PART_ORDER.indexOf(current) + 1) % PART_ORDER.length])
+    }, 3600)
+    return () => window.clearInterval(timer)
+  }, [touring])
+
+  const selectPart = (next: Part) => {
+    setTouring(false)
+    setPart(next)
+  }
+
+  const toggleTour = () => {
+    setTouring((value) => {
+      const next = !value
+      if (next) {
+        setPart('estator')
+        setReveal(1)
+        setExploded(false)
+        setRunning(true)
+      }
+      return next
+    })
+  }
 
   const info = INFO[machine][part]
   const partIdx = PART_ORDER.indexOf(part) + 1
@@ -86,7 +121,10 @@ export default function AnatomyLab() {
           <button
             key={m}
             type="button"
-            onClick={() => setMachine(m)}
+            onClick={() => {
+              setMachine(m)
+              setTouring(false)
+            }}
             className={`rounded-md px-2.5 py-1 font-semibold transition-colors ${
               machine === m
                 ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/50'
@@ -98,9 +136,90 @@ export default function AnatomyLab() {
         ))}
       </div>
 
+      <div className="grid gap-2 border-b border-zinc-800 bg-zinc-950/45 px-4 py-3 text-[11px] sm:grid-cols-[auto_auto_auto_1fr] sm:items-center">
+        <button
+          type="button"
+          onClick={toggleTour}
+          aria-pressed={touring}
+          className={`flex items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 font-semibold transition-colors ${
+            touring
+              ? 'border-cyan-400/70 bg-cyan-400/15 text-cyan-200'
+              : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-cyan-500/60'
+          }`}
+        >
+          {touring ? <Pause size={12} /> : <Play size={12} />}
+          {touring ? 'Pausar recorrido' : 'Recorrido guiado'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setRunning((value) => !value)}
+          aria-pressed={running}
+          className="flex items-center justify-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 font-semibold text-zinc-300 hover:border-zinc-500"
+        >
+          {running ? <Pause size={12} /> : <Play size={12} />}
+          {running ? 'Pausar giro' : 'Animar giro'}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setExploded((value) => !value)
+            setTouring(false)
+          }}
+          aria-pressed={exploded}
+          className={`flex items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 font-semibold transition-colors ${
+            exploded
+              ? 'border-amber-400/70 bg-amber-400/15 text-amber-200'
+              : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-amber-500/60'
+          }`}
+        >
+          <Box size={12} /> {exploded ? 'Ensamblar' : 'Vista explotada'}
+        </button>
+        <label className="flex min-w-0 items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/70 px-2.5 py-1.5 text-zinc-400">
+          <span className="shrink-0 font-semibold text-zinc-300">Corte</span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={Math.round(reveal * 100)}
+            onChange={(event) => {
+              setReveal(Number(event.target.value) / 100)
+              setTouring(false)
+            }}
+            aria-label="Porcentaje de corte para revelar el interior"
+            className="min-w-16 flex-1 accent-cyan-400"
+          />
+          <span className="w-8 text-right tabular-nums text-cyan-300">{Math.round(reveal * 100)}%</span>
+        </label>
+        <div className="flex items-center gap-1 sm:col-start-4 sm:justify-end">
+          <span className="mr-1 text-zinc-500">Velocidad</span>
+          {[0.5, 1, 1.75].map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setSpeed(value)}
+              aria-pressed={speed === value}
+              className={`rounded px-1.5 py-0.5 font-semibold ${
+                speed === value ? 'bg-cyan-500/20 text-cyan-200' : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              {value}×
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative h-72 w-full max-w-sm shrink-0 touch-none sm:h-80">
-          <MachineScene machine={machine} part={part} onSelect={setPart} resetSignal={resetSignal} />
+          <MachineScene
+            machine={machine}
+            part={part}
+            onSelect={selectPart}
+            resetSignal={resetSignal}
+            running={running}
+            speed={speed}
+            reveal={reveal}
+            exploded={exploded}
+          />
           <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/50 px-1.5 py-0.5 text-[9px] text-zinc-300">
             Arrastra para rotar · el corte revela el interior
           </span>
@@ -127,7 +246,7 @@ export default function AnatomyLab() {
                 ['armadura', 'Armadura (inducido)'],
               ] as [Part, string][]
             ).map(([p, label]) => (
-              <button key={p} type="button" onClick={() => setPart(p)}
+              <button key={p} type="button" onClick={() => selectPart(p)}
                 className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors ${
                   part === p
                     ? 'border-amber-500/60 bg-amber-500/10 text-amber-300'
@@ -144,6 +263,18 @@ export default function AnatomyLab() {
               {info.title}
             </p>
             <p className="text-xs leading-relaxed text-zinc-300">{info.text}</p>
+            {touring && (
+              <div className="mt-3 flex items-center gap-1" aria-label={`Paso ${partIdx} de 5 del recorrido guiado`}>
+                {PART_ORDER.map((tourPart, index) => (
+                  <span
+                    key={tourPart}
+                    className={`h-1.5 flex-1 rounded-full transition-colors ${
+                      index < partIdx ? 'bg-cyan-400' : 'bg-zinc-700'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
